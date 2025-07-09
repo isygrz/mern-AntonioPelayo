@@ -2,15 +2,19 @@
 
 # Tech Stack
 
-1. MongoDB
-2. Express.js
-3. React.js (w/ Vite)
-4. Node.js
-5. React Router
-6. Tailwind CSS
-7. JavaScript (ES6+)
-8. PostCSS
-9. Local JSON-based mock data (development)
+1. **MongoDB** (planned for backend)
+2. **Express.js** (planned for backend API)
+3. **Node.js** (backend server)
+4. **React.js 18** (frontend UI library)
+5. **Vite** (fast dev server and build tool)
+6. **React Router v6** (SPA route management)
+7. **Redux Toolkit** (state management)
+8. **Tailwind CSS** (utility-first CSS framework)
+9. **JavaScript (ES6+)** (language standard)
+10. **PostCSS** (used via Tailwind CSS pipeline)
+11. **react-quill** (WYSIWYG editor for blog CMS)
+12. **prop-types** (type-checking React props)
+13. **Local JSON-based mock data** (development & CMS simulation)
 
 # STEPS
 
@@ -106,3 +110,99 @@
 - Smooth hover effect enhances UI feedback:
   → transition-transform hover:scale-105
 - Container uses overflow-hidden to clip overflow and maintain clean edges
+
+12. React 18 Migration & Redux Toolkit Preparation
+
+- As part of stabilizing the development environment and aligning with Redux Toolkit best practices, we performed the following adjustments:
+  → downgraded React 19 → React 18
+  → locked versions to stable React 18 releases: "react": "18.2.0"; "react-dom": "18.2.0"; "react-router-dom": "6.23.1"
+
+13. Product Feature Refactor (Redux + Routing)
+
+- Refactored product rendering to use Redux Toolkit rather than static data import. Slug-based dynamic routing is preserved, UI is untouched.
+  → replaced `data.js` usage in `HomeScreen` and `ProductScreen` with `productSlice` Redux state
+  → used `useSelector()` to retrieve product array from store
+  → preserved all sample toggle logic, styling, and routing with `<Link to={`/product/${slug}`}>`
+- Files Modified
+  → `src/screens/HomeScreen.jsx` — product data now pulled from Redux store
+  → `src/screens/ProductScreen.jsx` — uses Redux to fetch product by slug
+  → `src/components/ProductCard.jsx` — no changes needed
+- Products will later be connected to backend API calls.
+
+14. CMS Foundation (Phase 1)
+
+- Implemented `<AdminLayout />` with nested routing
+- Built admin dashboard accessible at `/admin`
+- Sidebar routes: `/admin/heroes`, `/admin/blogs`, `/admin/badges`, `/admin/settings`
+
+15. Hero Section Manager (Phase 2)
+
+- Visual section CRUD interface (title, subtitle, image, CTA, placement)
+- Hero rendering on `/` via `SectionRenderer`
+- Modular structure with:
+  → `HeroManager.jsx`, `SectionEditor.jsx`, `ImagePicker.jsx`
+
+16. Blog Manager (Phase 3)
+
+- Admin blog editor using `react-quill` (WYSIWYG)
+- Fields: title, slug, image, content
+- Data synced with `blogData.js`
+- Public blog viewer:
+  → `/blog` → blog list
+  → `/blog/:slug` → blog post
+
+17. Badge Manager (Phase 4)
+
+- Create/edit badge labels and colors (stored in `badgeData.js`)
+- Live color previews via color picker
+- Future integration: product tags, banners, promos
+
+18. Cart System (Redux Toolkit)
+
+- Full cart state managed with `cartSlice.js`
+- Cart page `/cart`: update qty, remove item, subtotal, CTA
+- Add-to-cart button on `/product/:slug`
+
+19. Product Manager
+
+- Admin CRUD UI for products with:
+  → Image, name, description, price, badge
+- Connected to `data.js` for product list display
+- Uses `ImageUploader` component for previews
+
+20. Homepage CMS SectionRenderer
+
+- `SectionRenderer.jsx` renders all CMS-defined sections by:
+  → `isActive`, `placement`, and `order`
+- Supported visual types: `hero`, `promogrid`, `blogpreview`
+- Integrates into `/` via `HomeScreen.jsx`
+
+21. CMS Layout Editor (SettingsManager)
+
+- Add/reorder/disable visual sections across routes
+- Section types: hero, promoGrid, blogPreview
+- Component tree:
+  → `SettingsManager.jsx`
+  → `SectionRow.jsx`
+
+22. Image Uploader Utility
+
+- Used in product/blog/hero editors
+- Preview image or enter remote URL
+- Emits base64 or path to parent component
+
+23. Key Routes
+    | Route | Description |
+    |-------|-------------|
+    | `/` | Homepage with CMS-rendered visual sections + product grid |
+    | `/product/:slug` | Product detail + add-to-cart |
+    | `/cart` | Cart screen with Redux integration |
+    | `/blog`, `/blog/:slug` | Public blog list + post viewer |
+    | `/admin` | Admin dashboard layout |
+    | `/admin/heroes` | Hero visual section manager |
+    | `/admin/blogs` | Blog CMS manager |
+    | `/admin/badges` | Badge CRUD interface |
+    | `/admin/products` | Product CRUD interface |
+    | `/admin/settings` | Homepage visual section configurator |
+
+> Built to scale: All admin features are backend-ready with state and structure prepared for database integration.

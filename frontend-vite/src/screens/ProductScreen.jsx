@@ -1,10 +1,14 @@
 import { useParams } from 'react-router-dom';
-import data from '../data';
+import { useSelector, useDispatch } from 'react-redux';
 import { useState } from 'react';
+import { addToCart } from '../redux/slices/cartSlice';
 
 function ProductScreen() {
+  const dispatch = useDispatch();
   const { slug } = useParams();
-  const product = data.products.find((item) => item.slug === slug);
+  const product = useSelector((state) =>
+    state.product.products.find((item) => item.slug === slug)
+  );
 
   const [selectedImage, setSelectedImage] = useState(product?.imageGallery);
   const [quantity, setQuantity] = useState(1);
@@ -13,12 +17,23 @@ function ProductScreen() {
     return <div className="p-6 text-red-500">Product not found.</div>;
   }
 
+  const handleAddToCart = () => {
+    dispatch(
+      addToCart({
+        slug: product.slug,
+        name: product.name,
+        image: product.imageGallery,
+        price: product.price,
+        qty: quantity,
+      })
+    );
+  };
+
   return (
     <div className="p-6 max-w-screen-xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* LEFT COLUMN - IMAGE GALLERY */}
         <div className="flex flex-col md:flex-row gap-4">
-          {/* Thumbnails */}
           <div className="flex md:flex-col gap-4">
             {[
               product.imageGallery,
@@ -35,7 +50,6 @@ function ProductScreen() {
             ))}
           </div>
 
-          {/* Main Image */}
           <div className="flex-1">
             <img
               src={selectedImage}
@@ -47,21 +61,15 @@ function ProductScreen() {
 
         {/* RIGHT COLUMN - PRODUCT INFO */}
         <div className="flex flex-col gap-4">
-          {/* Title */}
           <h1 className="text-2xl font-bold">{product.name}</h1>
-
-          {/* SKU & Coverage */}
           <div className="text-sm text-gray-500">
             #SKU123456 &nbsp; | &nbsp; Coverage: 21.53 sq. ft./box
           </div>
-
-          {/* Price */}
           <div className="text-2xl font-bold text-gray-800">
             ${product.price}/box
           </div>
           <div className="text-sm text-gray-500">$4.99/sq. ft.</div>
 
-          {/* Color Swatches */}
           <div>
             <div className="text-sm font-semibold mb-1">Color</div>
             <div className="flex gap-3">
@@ -74,7 +82,6 @@ function ProductScreen() {
             </div>
           </div>
 
-          {/* Quantity */}
           <div className="flex items-center gap-2 mt-4">
             <label htmlFor="quantity" className="text-sm font-semibold">
               Boxes
@@ -89,9 +96,11 @@ function ProductScreen() {
             />
           </div>
 
-          {/* Buttons */}
           <div className="flex flex-col gap-3 mt-4">
-            <button className="bg-gray-800 text-white py-2 rounded hover:bg-black">
+            <button
+              onClick={handleAddToCart}
+              className="bg-gray-800 text-white py-2 rounded hover:bg-black"
+            >
               Add to Cart
             </button>
             <button className="border border-gray-800 py-2 rounded hover:bg-gray-100">
@@ -99,13 +108,11 @@ function ProductScreen() {
             </button>
           </div>
 
-          {/* Description */}
           <p className="text-gray-600 text-sm mt-6">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Add your
             product description here.
           </p>
 
-          {/* Visualizer Link */}
           <div className="text-sm text-gray-500 mt-4 underline cursor-pointer hover:text-black">
             View in Tile Visualizer
           </div>
