@@ -1,50 +1,45 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axiosInstance from '@/utils/axiosInstance'; // ✅ Use alias if configured in vite.config.js
 
-// Static seed data (replace with API later)
-const initialState = {
-  products: [
-    {
-      id: '1',
-      name: 'Talavera Blue Tile',
-      image: '/images/p1.jpeg',
-      description: 'Hand-painted traditional Mexican ceramic tile.',
-      price: 6.5,
-    },
-    {
-      id: '2',
-      name: 'Rustico Terracotta',
-      image: '/images/p2.jpeg',
-      description: 'Earth-toned rustic tile for floors and patios.',
-      price: 5.0,
-    },
-    {
-      id: '3',
-      name: 'Verde Colonial',
-      image: '/images/p3.jpeg',
-      description: 'Deep green glazed colonial-style tile.',
-      price: 7.2,
-    },
-    {
-      id: '4',
-      name: 'Negro Matte Tile',
-      image: '/images/p4.jpeg',
-      description: 'Matte black tile for bold contrast and depth.',
-      price: 6.75,
-    },
-    {
-      id: '5',
-      name: 'Flor de Mayo',
-      image: '/images/p5.jpeg',
-      description: 'Bright floral pattern with modern appeal.',
-      price: 8.0,
-    },
-  ],
-};
+// Async thunk to fetch all products
+export const fetchAllProducts = createAsyncThunk(
+  'products/fetchAll',
+  async (_, thunkAPI) => {
+    try {
+      const response = await axiosInstance.get('/products'); // ✅ FIXED: not /api/products
+      return response.data; // Should be an array
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
 
+// Slice definition
 const productSlice = createSlice({
-  name: 'product',
-  initialState,
+  name: 'products',
+  initialState: {
+    items: [],
+    loading: false,
+    error: null,
+  },
   reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAllProducts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllProducts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload; // ✅ Must be array
+      })
+      .addCase(fetchAllProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
 });
 
 export default productSlice.reducer;

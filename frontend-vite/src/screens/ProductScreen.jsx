@@ -7,7 +7,7 @@ function ProductScreen() {
   const dispatch = useDispatch();
   const { slug } = useParams();
   const product = useSelector((state) =>
-    state.product.products.find((item) => item.slug === slug)
+    state.products.items.find((item) => item.slug === slug)
   );
 
   const [selectedImage, setSelectedImage] = useState(product?.imageGallery);
@@ -23,7 +23,7 @@ function ProductScreen() {
         slug: product.slug,
         name: product.name,
         image: product.imageGallery,
-        price: product.price,
+        price: product?.pricing?.perBox || 0,
         qty: quantity,
       })
     );
@@ -65,11 +65,16 @@ function ProductScreen() {
           <div className="text-sm text-gray-500">
             #SKU123456 &nbsp; | &nbsp; Coverage: 21.53 sq. ft./box
           </div>
-          <div className="text-2xl font-bold text-gray-800">
-            ${product.price}/box
-          </div>
-          <div className="text-sm text-gray-500">$4.99/sq. ft.</div>
 
+          {/* Pricing Fields */}
+          <div className="text-2xl font-bold text-gray-800">
+            ${product?.pricing?.perBox?.toFixed(2) || '—'}/box
+          </div>
+          <div className="text-sm text-gray-500">
+            ${product?.pricing?.perSqFt?.toFixed(2) || '—'}/sq. ft.
+          </div>
+
+          {/* Color Picker Mockup */}
           <div>
             <div className="text-sm font-semibold mb-1">Color</div>
             <div className="flex gap-3">
@@ -82,6 +87,7 @@ function ProductScreen() {
             </div>
           </div>
 
+          {/* Quantity Picker */}
           <div className="flex items-center gap-2 mt-4">
             <label htmlFor="quantity" className="text-sm font-semibold">
               Boxes
@@ -96,6 +102,7 @@ function ProductScreen() {
             />
           </div>
 
+          {/* Action Buttons */}
           <div className="flex flex-col gap-3 mt-4">
             <button
               onClick={handleAddToCart}
@@ -104,7 +111,7 @@ function ProductScreen() {
               Add to Cart
             </button>
             <button className="border border-gray-800 py-2 rounded hover:bg-gray-100">
-              Add Sample – $3
+              Add Sample – ${product?.pricing?.sample?.toFixed(2) || '—'}
             </button>
           </div>
 

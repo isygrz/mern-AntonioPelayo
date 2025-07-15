@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 
 export default function ProductCard({ product, inSampleCart, onToggleSample }) {
+  const perBox = product?.pricing?.perBox;
+
   return (
     <div className="flex flex-col border border-slate-gray rounded-lg shadow transition-transform duration-300 bg-white overflow-hidden hover:shadow-xl hover:ring-2 hover:ring-blue-400 hover:scale-[1.02]">
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <Link to={`/product/${product.slug}`}>
           <img
-            src={product.imageGallery}
+            src={product.imageGallery || product.image}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           />
@@ -31,8 +33,10 @@ export default function ProductCard({ product, inSampleCart, onToggleSample }) {
 
         {/* Price */}
         <div className="text-sm text-slate-gray font-slab">
-          ${product.pricePerBox.toFixed(2)}{' '}
-          <span className="text-xs text-slate-veil font-slab">/box</span>
+          {typeof perBox === 'number'
+            ? `$${perBox.toFixed(2)}`
+            : 'Price Unavailable'}
+          <span className="text-xs text-slate-veil font-slab"> /box</span>
         </div>
 
         {/* Button */}

@@ -1,78 +1,44 @@
-import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchAllProducts } from '../redux/slices/productSlice';
 import ProductCard from '../components/ProductCard';
-import SectionRenderer from '../components/SectionRenderer'; // ✅ new
 
-// 🧪 Temporary mock layout config (will be server-driven later)
-const mockSections = [
-  {
-    id: 's1',
-    type: 'hero',
-    placement: '/',
-    isActive: true,
-    order: 1,
-    props: {
-      title: 'Vibrant Handmade Tiles',
-      subtitle: 'Inspired by Jalisco’s artistry',
-      image: '/images/p1.jpeg',
-      ctaText: 'Shop Now',
-      ctaLink: '/',
-    },
-  },
-  {
-    id: 's2',
-    type: 'promogrid',
-    placement: '/',
-    isActive: true,
-    order: 2,
-    props: {
-      heading: 'Popular Collections',
-    },
-  },
-  {
-    id: 's3',
-    type: 'blogpreview',
-    placement: '/',
-    isActive: true,
-    order: 3,
-    props: {},
-  },
-];
+const HomeScreen = () => {
+  const dispatch = useDispatch();
 
-function HomeScreen() {
-  const products = useSelector((state) => state.product.products);
-  const [sampleCart, setSampleCart] = useState(new Set());
+  const {
+    items: products,
+    loading,
+    error,
+  } = useSelector((state) => state.products);
 
-  const handleToggleSample = (slug) => {
-    setSampleCart((prev) => {
-      const updated = new Set(prev);
-      updated.has(slug) ? updated.delete(slug) : updated.add(slug);
-      return updated;
-    });
-  };
+  useEffect(() => {
+    dispatch(fetchAllProducts());
+  }, [dispatch]);
+
+  console.log('Products from Redux:', products); // Debug output
+
+  if (loading) return <p className="text-center mt-8">Loading...</p>;
+  if (error)
+    return <p className="text-center text-red-600 mt-8">Error: {error}</p>;
 
   return (
-    <main className="px-4 py-4 bg-white min-h-screen">
-      {/* ✅ CMS-Driven Visual Sections */}
-      <SectionRenderer sections={mockSections} />
-
-      {/* 🔹 Product Feed */}
-      <h1 className="text-3xl font-sans text-slate-gray mb-10 text-left">
+    <div className="px-4 sm:px-6 lg:px-8">
+      <h3 className="text-xl font-bold font-slab text-slate-gray mb-6 text-left">
         Featured Products
-      </h1>
-      <div className="flex flex-wrap justify-between gap-y-8 max-w-screen-xl mx-auto">
-        {products.map((product) => (
-          <div key={product.slug} className="w-[23%] min-w-[200px]">
-            <ProductCard
-              product={product}
-              inSampleCart={sampleCart.has(product.slug)}
-              onToggleSample={handleToggleSample}
-            />
-          </div>
-        ))}
-      </div>
-    </main>
+      </h3>
+
+      {Array.isArray(products) && products.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {products.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-slate-gray">No Products Found</p>
+      )}
+    </div>
   );
-}
+};
 
 export default HomeScreen;
