@@ -1,44 +1,32 @@
-import { useState } from 'react';
-import SectionEditor from '../../components/admin/SectionEditor';
-import ImageUploader from '../../components/admin/ImageUploader'; // ✅ Add this
-
-const mockSections = [
-  {
-    id: '1',
-    title: 'Summer Sale',
-    subtitle: 'Up to 40% off rustic tiles',
-    image: '/images/p1.jpeg',
-    ctaText: 'Shop Now',
-    ctaLink: '/',
-    placement: '/',
-    isActive: true,
-  },
-  {
-    id: '2',
-    title: 'Hand-Painted Tiles',
-    subtitle: 'Artisanal pieces from Guadalajara',
-    image: '/images/p2.jpeg',
-    ctaText: 'Browse Collection',
-    ctaLink: '/category/hand-painted',
-    placement: '/',
-    isActive: false,
-  },
-];
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import SectionEditor from '@/components/admin/SectionEditor';
+import ImageUploader from '@/components/admin/ImageUploader';
+import {
+  fetchHeroes,
+  createHero,
+  updateHero,
+  deleteHero,
+} from '@/redux/slices/heroSlice';
 
 const HeroManager = () => {
-  const [sections, setSections] = useState(mockSections);
+  const dispatch = useDispatch();
+  const { items: heroes, loading } = useSelector((state) => state.heroes);
+
   const [selected, setSelected] = useState(null);
 
+  useEffect(() => {
+    dispatch(fetchHeroes());
+  }, [dispatch]);
+
   const handleSave = (section) => {
-    if (section.id) {
-      setSections((prev) =>
-        prev.map((s) => (s.id === section.id ? section : s))
-      );
+    if (section._id) {
+      dispatch(updateHero({ id: section._id, updates: section }));
     } else {
-      setSections((prev) => [
-        ...prev,
-        { ...section, id: Date.now().toString() },
-      ]);
+      dispatch(createHero()).then((res) => {
+        const created = res.payload;
+        dispatch(updateHero({ id: created._id, updates: section }));
+      });
     }
     setSelected(null);
   };
@@ -55,10 +43,12 @@ const HeroManager = () => {
         </button>
       </div>
 
+      {loading && <p>Loading...</p>}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {sections.map((section) => (
+        {heroes.map((section) => (
           <div
-            key={section.id}
+            key={section._id}
             className="bg-white rounded shadow p-4 relative"
           >
             <img
@@ -74,12 +64,20 @@ const HeroManager = () => {
             <div className="text-sm text-green-600 mt-1">
               {section.isActive ? 'Active' : 'Inactive'}
             </div>
-            <button
-              onClick={() => setSelected(section)}
-              className="absolute top-2 right-2 text-sm px-2 py-1 bg-gray-100 border rounded hover:bg-gray-200"
-            >
-              Edit
-            </button>
+            <div className="absolute top-2 right-2 flex gap-2">
+              <button
+                onClick={() => setSelected(section)}
+                className="text-sm px-2 py-1 bg-gray-100 border rounded hover:bg-gray-200"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => dispatch(deleteHero(section._id))}
+                className="text-sm px-2 py-1 bg-red-100 border border-red-400 rounded hover:bg-red-200"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         ))}
       </div>

@@ -365,3 +365,210 @@
 39. `vite.config.js`
 
 - resolve: { alias: { '@': path.resolve(\_\_dirname, 'src'), }, },
+
+40. Product Editing Modal + Image Upload Integration
+
+- Introduced full product editing capability via EditProductModal.jsx, allowing admin users to modify product name, slug, badge, pricing, description, and image
+  → Built using TailwindCSS + Headless UI modal component with accessibility and transitions
+- Invoked from ProductManager.jsx:
+  → Clicking "Edit" opens modal with prefilled product data
+  → "Save" dispatches updateProduct to Redux and backend
+- Integrated ImageUploader.jsx into modal to support image uploads
+  → Displays uploaded image preview and emits URL to parent
+
+41. Image Upload Backend API (Multer + Static Hosting)
+
+- Added Express POST route:
+  → POST /api/uploads — accepts raw image files via multipart/form-data
+  → Files saved to local /uploads/ directory using multer
+- Implemented storage strategy in uploadRoutes.js:
+  → Uses multer.diskStorage()
+  → Filenames timestamped for uniqueness
+  → Response returns { imageUrl } used in frontend
+- Public static file serving enabled:
+  → /uploads/<filename> accessible in browser
+  → Configured using express.static() with path.resolve()
+- Files added:
+  → backend/routes/uploadRoutes.js
+  → backend/uploads/ directory (must exist)
+- server.js updates:
+  → Added route registration app.use('/api/uploads', uploadRoutes)
+  → Added static file serving for /uploads
+
+42. React Image Upload Integration (via ImageUploader)
+
+- Updated ImageUploader.jsx to:
+  → Send FormData with raw image file to /api/uploads
+  → Receive imageUrl and set it in product state
+  → Allow preview and reuse of image within edit modal
+- Integrated seamlessly into EditProductModal.jsx form state
+- Raw file upload approach used:
+  → Smaller payload than base64
+  → Better long-term performance
+  → Aligns with industry best practices
+
+43. Admin Product Filtering and Sorting
+
+- Added UI filters to ProductManager.jsx for easier product management:
+  → Search input (name-based, case-insensitive)
+  → Badge dropdown filter (new, sale, limited, all)
+  → Sort menu by name (A-Z, Z-A) or price (low-high, high-low)
+- All filtering/sorting is client-side and applied in real-time using React state
+- Improves scalability and admin usability as product count grows
+
+44. Admin Product Pagination
+
+- Added full client-side pagination to ProductManager.jsx
+  → 6 items per page
+  → Page indicator + Prev/Next buttons
+  → Fully responsive with Tailwind CSS
+- Pagination applies after filtering and sorting, ensuring that the admin always sees the correct subset of data
+- Includes edge-state handling (disabled buttons, active page highlight)
+
+45. Admin Product Editing Modal Integration
+
+- Integrated EditProductModal.jsx into ProductManager.jsx
+  → Clicking “Edit” opens a modal with the selected product prefilled
+  → Changes to name, slug, badge, image, pricing, and description can be made
+- Saving the form:
+  → Dispatches updateProduct(updatedProduct) to Redux
+  → Updates live MongoDB entry via Express API
+  → Automatically reflects in product grid
+- Modal built with @headlessui/react and TailwindCSS
+  → Accessible and responsive
+  → Uses ImageUploader to preview/upload product image
+
+46. Blog CMS Backend Integration (Phase 1)
+
+- Introduced full backend support for blog management:
+- Route Method Description
+  → /api/blogs GET Fetch all blog posts
+  → /api/blogs/slug/:slug GET Fetch single post by slug
+  → /api/blogs POST Create a new blog (admin only)
+  → /api/blogs/:id PUT Update blog by ID (admin only)
+  → /api/blogs/:id DELETE Delete blog by ID (admin only)
+- Added:
+  → Blog.js model
+  → blogController.js for CRUD handlers
+  → blogRoutes.js for route wiring
+  → Mounted to Express server
+- Ready for full Redux and CMS frontend connection in BlogManager.jsx
+
+47. Blog CMS Redux Integration (Phase 2)
+
+- Converted blog management from static blogData.js to full Redux + API connectivity
+- Created blogSlice.js with createAsyncThunk to manage:
+  → fetchBlogs, createBlog, updateBlog, deleteBlog
+- Refactored BlogManager.jsx to use Redux state instead of hardcoded data
+- Blog CRUD actions now persist to MongoDB via backend /api/blogs
+- Blog CMS is now live — ready for content management by admins
+
+48. Admin Product Modal Editing & Pagination Integration
+
+- Enhanced the ProductManager admin screen to include:
+- Live Product Editing via modal:
+  → Uses EditProductModal.jsx to allow editing name, slug, badge, pricing, image, and description
+  → Modal opens with prefilled values and updates Redux + MongoDB on save
+- Create + Edit Flow:
+  → Clicking "+ Create Product" dispatches createProduct(), inserts into database, then opens the edit modal
+  → Admin can immediately fill out and save new product details
+- Pagination Controls:
+  → Displays 6 products per page
+  → Includes Prev/Next buttons and direct page number buttons
+  → Automatically resets to page 1 on filter/search changes
+- Filtering and Sorting:
+  → Search by product name (case-insensitive)
+  → Filter by badge (new, limited, sale)
+  → Sort by name or price (asc/desc)
+- All interactions update Redux state and MongoDB in real-time via createProduct, updateProduct, and deleteProduct async thunks
+
+49. CMS Backend Integration for Blog, Badge, and Hero Sections
+
+- Fully implemented MongoDB + Express backend support for admin-managed content sections:
+- Blog
+  → Created Blog.js model with fields: title, slug, image, content, author, published
+  → Built blogController.js with CRUD handlers (getAllBlogs, getBlogBySlug, createBlog, updateBlog, deleteBlog)
+  → Mounted via blogRoutes.js at /api/blogs (public GET, admin-protected POST/PUT/DELETE)
+  → Supports Markdown or HTML content in content field
+- Badge
+  → Created Badge.js model with fields: name, color, description
+  → Added badgeController.js with standard CRUD
+  → Routes mounted at /api/badges with full admin control
+  → Ready for dynamic assignment of product badges via admin interface
+- Hero
+  → Created Hero.js model with fields: heading, subheading, image, ctaText, ctaLink, active
+  → Set up heroController.js with full CRUD logic
+  → Routes live at /api/heroes for editing homepage visual content sections
+  → Supports multiple active/inactive heroes for homepage CMS flexibility
+- All CMS routes are protected with authMiddleware.js (protect, admin) and support secure session-based auth
+- Backend now ready for Redux + admin UI integration (BlogManager, BadgeManager, HeroManager)
+
+50. BlogManager.jsx Integration with Full Redux + ReactQuill WYSIWYG Editor
+
+- Implemented full CRUD functionality for Blog CMS using Redux Toolkit and ReactQuill
+- Features include:
+- Redux Integration
+  → Added blogSlice.js with fetchBlogs, createBlog, updateBlog, and deleteBlog async thunks
+  → Wired into Redux store under blogs key
+- BlogManager.jsx Admin Screen
+  → Displays all blog posts with title, author, content preview, and status (Published/Draft)
+  → Supports inline creation, editing, and deletion
+- Editing state opens a rich form with inputs for:
+  → Title, Slug, Author
+  → AuthorImage (via ImageUploader)
+  → Content (via ReactQuill WYSIWYG)
+  → Publish toggle
+- Editor Choice
+  → Replaced MarkdownEditor.jsx with ReactQuill for a modern, intuitive admin editing experience
+  → MarkdownEditor has been deprecated and removed for clarity
+
+  51. BadgeManager.jsx Admin Screen with Redux Integration
+
+- Implemented full admin UI and backend integration for managing product badges
+- Redux: badgeSlice.js
+- CRUD operations wired via async thunks:
+  → fetchBadges, createBadge, updateBadge, deleteBadge
+  → Automatically updates state and syncs with MongoDB
+  → Slice registered in Redux store under badges
+- BadgeManager.jsx
+  → Displays all badges in a responsive grid layout
+- Each badge shows:
+  → Name
+  → Color swatch (dynamic background)
+  → Short description
+  → Clicking a badge enables inline editing
+- Admin can:
+  → Update name, color, and description
+  → Delete badge
+  → Create new badge (adds to top of list)
+  → Changes are saved to MongoDB and reflected in real-time in Redux
+- Notes
+  → Color accepts any valid CSS color (hex code or named)
+  → Designed to manage visual metadata for filtering, highlighting, and promotions
+
+52. HeroManager.jsx Admin UI with Redux + MongoDB Integration
+
+- Integrated full-featured admin screen for managing homepage hero sections
+- Redux: heroSlice.js
+  → CRUD thunks: fetchHeroes, createHero, updateHero, deleteHero
+  → Registered in Redux store under heroes
+  → State updates and MongoDB sync in real-time
+- HeroManager.jsx
+  → Replaced mock local data with Redux-powered dynamic hero section list
+- Grid layout preview of all hero blocks with:
+  → Image thumbnail
+  → Title and subtitle
+  → Placement info
+  → Activation status (Active/Inactive)
+- Inline Admin Features
+  → `+ New Section` creates a blank MongoDB entry and opens the editor
+- Admin can edit:
+  → Title / Subtitle
+  → Placement
+  → CTA Text / Link
+  → isActive toggle
+  → Hero Image (via ImageUploader)
+  → Changes saved instantly to Redux and MongoDB
+  → Uses reusable SectionEditor modal
+- Homepage hero sections are now fully CMS-managed and dynamic
+- Ready to render on frontend via /api/heroes or placement-based logic

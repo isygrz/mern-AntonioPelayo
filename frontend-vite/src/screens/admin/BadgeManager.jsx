@@ -1,71 +1,107 @@
-import { useState } from 'react';
-import BadgeEditor from '../../components/admin/BadgeEditor';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchBadges,
+  createBadge,
+  updateBadge,
+  deleteBadge,
+} from '@/redux/slices/badgeSlice';
 
-const initialBadges = [
-  { id: '1', label: 'New', color: '#22C55E' },
-  { id: '2', label: 'Online Only', color: '#3B82F6' },
-  { id: '3', label: 'Limited', color: '#EAB308' },
-];
+export default function BadgeManager() {
+  const dispatch = useDispatch();
+  const { items: badges, loading } = useSelector((state) => state.badges);
+  const [editing, setEditing] = useState(null);
 
-const BadgeManager = () => {
-  const [badges, setBadges] = useState(initialBadges);
-  const [selected, setSelected] = useState(null);
+  useEffect(() => {
+    dispatch(fetchBadges());
+  }, [dispatch]);
 
-  const handleSave = (badge) => {
-    if (badge.id) {
-      setBadges((prev) => prev.map((b) => (b.id === badge.id ? badge : b)));
-    } else {
-      setBadges((prev) => [...prev, { ...badge, id: Date.now().toString() }]);
-    }
-    setSelected(null);
+  const handleChange = (field, value) => {
+    setEditing((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    dispatch(updateBadge({ id: editing._id, updates: editing }));
+    setEditing(null);
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Badge Manager</h1>
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Badge Manager</h1>
         <button
-          onClick={() => setSelected({})}
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          onClick={() => dispatch(createBadge())}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
-          + New Badge
+          + Create Badge
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      {loading && <p>Loading...</p>}
+
+      <div className="grid md:grid-cols-3 gap-4">
         {badges.map((badge) => (
           <div
-            key={badge.id}
-            className="bg-white p-4 rounded shadow flex items-center justify-between"
+            key={badge._id}
+            className={`p-4 border rounded shadow cursor-pointer ${
+              editing?._id === badge._id ? 'border-blue-600' : ''
+            }`}
+            onClick={() => setEditing(badge)}
           >
-            <div className="flex items-center gap-3">
-              <span
-                className="text-sm font-medium px-2 py-1 rounded-full text-white"
-                style={{ backgroundColor: badge.color }}
-              >
-                {badge.label}
-              </span>
-              <span className="text-xs text-gray-500">{badge.color}</span>
-            </div>
-            <button
-              onClick={() => setSelected(badge)}
-              className="text-sm text-gray-500 underline"
+            <div className="font-bold">{badge.name}</div>
+            <div className="text-sm text-gray-500">{badge.description}</div>
+            <div
+              className="mt-2 px-2 py-1 inline-block rounded text-white text-xs"
+              style={{ backgroundColor: badge.color }}
             >
-              Edit
-            </button>
+              {badge.color}
+            </div>
           </div>
         ))}
       </div>
 
-      {selected !== null && (
-        <BadgeEditor
-          badge={selected}
-          onSave={handleSave}
-          onCancel={() => setSelected(null)}
-        />
+      {editing && (
+        <div className="mt-6 border-t pt-4 space-y-3">
+          <input
+            className="w-full border p-2 rounded"
+            placeholder="Name"
+            value={editing.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+          />
+          <input
+            className="w-full border p-2 rounded"
+            placeholder="Color (hex or name)"
+            value={editing.color}
+            onChange={(e) => handleChange('color', e.target.value)}
+          />
+          <textarea
+            className="w-full border p-2 rounded"
+            placeholder="Description"
+            value={editing.description}
+            onChange={(e) => handleChange('description', e.target.value)}
+          />
+          <div className="flex gap-4">
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded"
+              onClick={handleSave}
+            >
+              Save
+            </button>
+            <button
+              className="px-4 py-2 bg-red-600 text-white rounded"
+              onClick={() => dispatch(deleteBadge(editing._id))}
+            >
+              Delete
+            </button>
+            <button
+              className="px-4 py-2 text-gray-600 underline"
+              onClick={() => setEditing(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
-};
-
-export default BadgeManager;
+}

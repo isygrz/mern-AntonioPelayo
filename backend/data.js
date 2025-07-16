@@ -66,7 +66,7 @@ const data = {
     {
       sku: '000003',
       name: 'Riad White Ceramic Wall Tile - 4 x 4 in.',
-      slug: 'mallorca-white-ceramic-wall-tile',
+      slug: 'riad-white-ceramic-wall-tile',
       badge: 'new',
       tileCollection: ['Ceramic Wall Tile'], // ✅ renamed
       material: 'Ceramic Tile',
