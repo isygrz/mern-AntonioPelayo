@@ -5,7 +5,7 @@ export const fetchBlogs = createAsyncThunk(
   'blogs/fetchAll',
   async (_, thunkAPI) => {
     try {
-      const { data } = await axios.get('/api/blogs');
+      const { data } = await axios.get('/blogs');
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(
@@ -19,7 +19,7 @@ export const createBlog = createAsyncThunk(
   'blogs/create',
   async (_, thunkAPI) => {
     try {
-      const { data } = await axios.post('/api/blogs');
+      const { data } = await axios.post('/blogs');
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(
@@ -34,7 +34,7 @@ export const updateBlog = createAsyncThunk(
   async (updatedBlog, thunkAPI) => {
     try {
       const { data } = await axios.put(
-        `/api/blogs/${updatedBlog._id}`,
+        `/blogs/${updatedBlog._id}`,
         updatedBlog
       );
       return data;
@@ -50,7 +50,7 @@ export const deleteBlog = createAsyncThunk(
   'blogs/delete',
   async (id, thunkAPI) => {
     try {
-      await axios.delete(`/api/blogs/${id}`);
+      await axios.delete(`/blogs/${id}`);
       return id;
     } catch (err) {
       return thunkAPI.rejectWithValue(

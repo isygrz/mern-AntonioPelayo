@@ -572,3 +572,206 @@
   → Uses reusable SectionEditor modal
 - Homepage hero sections are now fully CMS-managed and dynamic
 - Ready to render on frontend via /api/heroes or placement-based logic
+
+53. Refactored CMS Backend: Badge & Hero Sections
+
+- Completed backend implementation for dynamic Badge and Hero homepage sections, enabling full admin-side management via secure API
+- Badge CMS Integration (Model: Badge.js)
+  → Fields:
+  → name — string (required)
+  → color — CSS color string (default: #000000)
+  → description — short optional description
+- Controller: badgeController.js
+  → CRUD handlers:
+  → getBadges() — returns all badges
+  → createBadge() — creates a default badge
+  → updateBadge(id) — modifies name, color, or description
+  → deleteBadge(id) — removes badge by \_id
+- Routes: badgeRoutes.js
+  → Mounted at /api/badges
+  → All POST, PUT, DELETE methods are protected with:
+  → protect — requires login
+  → admin — requires admin flag
+- Badge CRUD is now fully wired to MongoDB and Express for use in:
+  → Product labeling
+  → Admin filtering
+  → Homepage highlights and callouts
+- Hero CMS Integration (Model: Hero.js)
+  → Fields:
+  → heading — title (required)
+  → subheading — subtitle (optional)
+  → image — image path or URL
+  → ctaText / ctaLink — optional call-to-action
+  → active — boolean toggle (default: true)
+- Controller: heroController.js
+  → CRUD handlers:
+  → getHeroes() — fetch all hero entries
+  → createHero() — adds blank/default hero
+  → updateHero(id) — saves updates to hero section
+  → deleteHero(id) — removes hero from DB
+- Routes: heroRoutes.js
+  → Mounted at /api/heroes
+  → Admin-only routes protected by protect and admin middleware
+- Hero sections now fully managed in MongoDB and accessible via secure CMS endpoints
+  → Ready to dynamically render homepage banners
+  → Multiple heroes can be active/inactive for layout flexibility
+- Security & Middleware (Applied to all admin endpoints)
+  → protect — JWT-based session auth
+  → admin — requires isAdmin flag on user
+- Mounted in server.js:
+  → /api/badges
+  → /api/heroes
+- File-based structure aligns with blog CMS conventions and is frontend-ready
+
+53. Redux Integration for Badge & Hero CMS
+
+- Both `BadgeManager.jsx` and `HeroManager.jsx` are now fully wired to the backend using Redux Toolkit async thunks and MongoDB.
+- `badgeSlice.js`
+  → Handles `fetchBadges`, `createBadge`, `updateBadge`, `deleteBadge`
+  → Registered under `badges` in Redux store
+  → Automatically syncs UI and MongoDB data
+- `heroSlice.js`
+  → Handles `fetchHeroes`, `createHero`, `updateHero`, `deleteHero`
+  → Registered under `heroes` in Redux store
+  → Enables real-time CMS editing of homepage hero sections
+- BadgeManager.jsx
+  → Displays badges in a responsive grid
+  → Supports inline editing, color previews, and full CRUD
+  → Live changes update both Redux and MongoDB
+- HeroManager.jsx
+  → Renders CMS-defined hero sections
+  → Supports creation and editing with `SectionEditor` and `ImageUploader`
+  → Visual previews and full state sync on all CRUD operations
+- Result: Admins can now manage homepage visual branding and marketing tags dynamically with full database persistence and no manual refresh needed.
+
+54. CMS Seeding System (Badges & Heroes)
+
+- The project now includes a full-featured seeding system for CMS collections such as badges and heroes. This allows flexible data initialization using either CLI flags or dedicated scripts
+- Seeding Entry Points
+  → seed.js | Bulk or targeted seeding via flags | node seed.js --all
+  → seedBadges.js | Only seed badges | node seedBadges.js
+  → seedHeroes.js | Only seed heroes | node seedHeroes.js
+- CLI-Based seed.js Workflow
+- The seed.js script now supports command line flags for granular control:
+  → node seed.js --all (# Default behavior — seeds everything)
+  → node seed.js --products (# Only seeds product data)
+  → node seed.js --badges (# Only seeds badge data)
+  → node seed.js --heroes (# Only seeds hero section data)
+- This enables faster iteration without wiping or reloading unrelated collections.
+- Badge Sample Data
+- Badges represent product tags or visual labels (e.g. “New”, “Sale”). Sample entries include:
+  → { "name": "New", "color": "#10B981", "description": "Just added to our collection!" }
+  → These are seeded into the badges collection.
+- Hero Sample Data
+- Heroes are CMS-managed homepage banners with text, image, and CTA. Example structure:
+  → { "heading": "Summer Ceramic Drop", "subheading": "Explore bold colors and hand-fired texture.", "image": "/uploads/promo-hero1.jpg", "ctaText": "Browse New Arrivals", "ctaLink": "/products", "active": true, "placement": "homepage" }
+  → These are seeded into the heroes collection.
+- File Locations
+- All seed files live in the backend/ directory:
+  → backend/
+  → seed.js | # CLI-powered seeder
+  → seedBadges.js | # Standalone badge seeder
+  → seedHeroes.js | # Standalone hero seeder
+- Developer Use Cases
+  → First-time full DB setup node seed.js or node seed.js --all
+  → Only updating badge visuals node seedBadges.js
+  → Testing new homepage heroes node seedHeroes.js
+  → Avoid wiping unrelated data Use targeted seeding with flags
+- This seeding architecture supports safe, fast, and isolated development across multiple CMS collections, and is future-proofed for automation and deployment
+
+55. Modular Seeding System for CMS Collections
+
+- Expanded backend data seeding system to support blogs, users, and orders, in addition to existing badges and heroes.
+- Seeding options:
+  → seed.js — Bulk seeding with optional CLI flags for selective data insertion
+- Individual seeders:
+  → seedBadges.js — seeds badges collection
+  → seedHeroes.js — seeds hero sections
+  → seedBlogs.js — seeds blog content
+  → seedUsers.js — seeds mock admin/user accounts
+  → seedOrders.js — seeds mock guest or user order data
+- All seeder scripts connect to MongoDB securely via .env and support async/await
+- CLI Flag Support for seed.js:
+  → Example: node seed.js --badges --heroes
+  → Available flags: --badges, --heroes, --blogs, --users, --orders, --products
+- Seed Workflow Options:
+  → node seed.js | Seed all supported collections (products, badges, heroes, blogs, users, orders)
+  → node seed.js --badges | Seed only badges collection
+  → node seedBlogs.js | Seed blogs via isolated script
+  → node seedUsers.js | Seed mock admin and guest users
+  → node seedOrders.js | Seed mock guest checkout order
+
+56. Selective Collection Deletion Utility (clear.js)
+
+- Introduced clear.js script to wipe specific MongoDB collections without affecting others
+- Accepts CLI arguments for fine-grained control
+- Built-in safeguards: No action is taken unless a valid flag is passed
+- Flags supported:
+  → --products, --badges, --heroes, --blogs, --users, --orders
+- Clear Workflow Example:
+  → node clear.js --badges --heroes | Deletes only badges and hero CMS collections
+  → node clear.js | Displays help message if no valid flags provided
+- This modular structure supports fast iteration and clean resets during development, especially for solo or small team workflows.
+
+57. Header/Footer Modularization
+
+- Extracted header markup from `App.jsx` into new `Header.jsx` component
+  → Located in `src/components/Header.jsx`
+  → Includes logo and "View Cart" button
+  → Removed Blog button (now available via footer under "Resources")
+- Footer remains in `Footer.jsx` and renders globally
+- Both `Header` and `Footer` now imported and used inside `App.jsx`
+- Benefits:
+  → Improved file organization
+  → Simplified global layout management
+  → Paves way for future header expansion (search bar, auth buttons, etc.)
+
+58. CMS Slice Integration + Visual Section Rendering Setup
+
+- Implemented Redux state slice for CMS sections:
+  → Created cmsSlice.js under src/redux/slices/
+  → Includes fetchCmsByRoute async thunk to GET CMS data via /api/cms?route=/
+  → Stores cmsSections in Redux and exposes loading/error state
+- Connected CMS sections to HomeScreen.jsx:
+  → Added useEffect to dispatch fetchCmsByRoute('/')
+  → Uses SectionRenderer.jsx to map through CMS sections and render matching components dynamically (e.g. HeroSection, BlogPreviewSection)
+- Created placeholder CMS components for dynamic rendering:
+  → HeroSection.jsx, PromoGridSection.jsx, and BlogPreviewSection.jsx under src/components/
+  → BlogPreviewSection fetches latest blog posts from Redux and displays a grid preview
+- Updated SectionRenderer.jsx to conditionally render each component by section.type
+  → Prevents breaking if unknown section type is encountered
+  → Keeps logic modular and easy to extend
+- CMS backend routing:
+  → Created cmsRoutes.js and mounted on /api/cms in server.js
+  → Supports GET /api/cms?route=/ to fetch sections assigned to a given route
+  → Pulls from CMS model in MongoDB seeded via seedCms.js
+- Seeding support added to seed.js:
+  → Use node seed.js --cms to seed CMS data only
+  → cmsSeed.js defines default homepage sections (hero, promoGrid, blog)
+- Benefits:
+  → Enables dynamic visual section rendering based on CMS config
+  → Establishes full stack flow for admin-controlled homepage layout
+  → Sets up future extensibility for CMS tools and layouts
+
+59. CMS Section Renderer Integration & Enum Type Consistency
+
+- Resolved Issues:
+  → CMS section data seeded with camelCase type values (e.g., promoGrid, blogPreview) was not rendering on the frontend
+  → SectionRenderer.jsx expected lowercase strings ('promogrid', 'blogpreview'), causing mismatches and silent rendering failures
+  → CMS schema validation error (is not a valid enum value for path type) occurred when lowercased values were seeded from the backend
+- Standardized CMS type values to camelCase enums (hero, promoGrid, blogPreview) across:
+  → Backend seeding script (seed.js)
+  → CMS Mongoose schema enum validation (CMS.js)
+  → Frontend logic (SectionRenderer.jsx)
+- Refactored SectionRenderer.jsx to:
+  → Use a safe default fallback for missing or unknown sections
+  → Add console.info('🧩 Rendering section type:', type) for better traceability
+  → Clean up the switch block to match camelCase types directly (no .toLowerCase() needed)
+- Verified:
+  → Redux DevTools logs confirm CMS sections are fetched and rendered in order
+  → Network tab shows successful /cms?route=/ and /products fetches
+  → Hero, PromoGrid, and BlogPreview now appear correctly on the homepage
+- Outcome:
+  → Eliminated silent frontend render failures from enum mismatches
+  → Ensured CMS sections can be reliably seeded and rendered without manual mapping
+  → Ready to support dynamic visual blocks configured in MongoDB and displayed in React

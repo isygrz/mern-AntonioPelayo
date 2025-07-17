@@ -6,6 +6,7 @@ import orderReducer from './slices/orderSlice';
 import blogReducer from './slices/blogSlice';
 import badgesReducer from './slices/badgeSlice';
 import heroesReducer from './slices/heroSlice';
+import cmsReducer from './slices/cmsSlice';
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     blogs: blogReducer,
     badges: badgesReducer,
     heroes: heroesReducer,
+    cms: cmsReducer,
   },
 });
 

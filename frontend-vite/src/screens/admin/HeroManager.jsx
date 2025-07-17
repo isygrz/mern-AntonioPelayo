@@ -12,7 +12,6 @@ import {
 const HeroManager = () => {
   const dispatch = useDispatch();
   const { items: heroes, loading } = useSelector((state) => state.heroes);
-
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
