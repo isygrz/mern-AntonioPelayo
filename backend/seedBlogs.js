@@ -1,12 +1,4 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import connectDB from './db.js';
-import Blog from './models/Blog.js';
-
-dotenv.config();
-await connectDB();
-
-const sampleBlogs = [
+const blogs = [
   {
     title: 'Behind the Brush: Antonio’s Process',
     slug: 'behind-the-brush',
@@ -25,12 +17,4 @@ const sampleBlogs = [
   },
 ];
 
-try {
-  await Blog.deleteMany();
-  const inserted = await Blog.insertMany(sampleBlogs);
-  console.log(`✅ Seeded ${inserted.length} blog posts`);
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Blog seeding failed:', error);
-  process.exit(1);
-}
+export default blogs;

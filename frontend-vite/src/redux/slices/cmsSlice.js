@@ -1,19 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../../utils/axiosInstance';
+import axios from '@/utils/axiosInstance';
 
-// Async thunk to fetch CMS sections for a specific route (e.g. '/')
 export const fetchCmsByRoute = createAsyncThunk(
-  'cms/fetchByRoute',
-  async (route = '/', thunkAPI) => {
+  'cms/fetchCmsByRoute',
+  async (route = '/', { rejectWithValue }) => {
     try {
-      // ✅ Removed duplicate /api
-      const { data } = await axiosInstance.get(`/cms?route=${route}`);
-      console.log('✅ CMS sections from backend:', data.sections);
-      return data.sections;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
-      );
+      const { data } = await axios.get(`/api/cms?route=${route}`);
+      return { ...data, route };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+export const updateCms = createAsyncThunk(
+  'cms/updateCms',
+  async ({ route, sections }, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.patch(`/api/cms`, { route, sections });
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
@@ -21,11 +28,21 @@ export const fetchCmsByRoute = createAsyncThunk(
 const cmsSlice = createSlice({
   name: 'cms',
   initialState: {
-    loading: false,
+    route: '/',
     sections: [],
+    loading: false,
     error: null,
+    success: false,
   },
-  reducers: {},
+  reducers: {
+    resetCmsStatus: (state) => {
+      state.success = false;
+      state.error = null;
+    },
+    reorderSections: (state, action) => {
+      state.sections = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCmsByRoute.pending, (state) => {
@@ -34,13 +51,28 @@ const cmsSlice = createSlice({
       })
       .addCase(fetchCmsByRoute.fulfilled, (state, action) => {
         state.loading = false;
-        state.sections = action.payload;
+        state.sections = action.payload?.sections || [];
+        state.route = action.payload?.route || '/';
       })
       .addCase(fetchCmsByRoute.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(updateCms.pending, (state) => {
+        state.loading = true;
+        state.success = false;
+      })
+      .addCase(updateCms.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.sections = action.payload.sections;
+      })
+      .addCase(updateCms.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
   },
 });
 
+export const { resetCmsStatus, reorderSections } = cmsSlice.actions;
 export default cmsSlice.reducer;

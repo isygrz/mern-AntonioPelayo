@@ -11,10 +11,10 @@ const HomeScreen = () => {
   const dispatch = useDispatch();
 
   const {
-    items: products,
-    loading,
-    error,
-  } = useSelector((state) => state.products);
+    items: products = [],
+    loading = false,
+    error = null,
+  } = useSelector((state) => state.products || {});
 
   const { sections } = useSelector((state) => state.cms);
 

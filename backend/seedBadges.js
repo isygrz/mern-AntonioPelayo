@@ -1,10 +1,3 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import Badge from './models/Badge.js';
-import connectDB from './db.js';
-
-dotenv.config();
-
 const badges = [
   {
     name: 'New',
@@ -23,17 +16,4 @@ const badges = [
   },
 ];
 
-const seedBadges = async () => {
-  try {
-    await connectDB();
-    await Badge.deleteMany();
-    const created = await Badge.insertMany(badges);
-    console.log(`✅ Seeded ${created.length} badges`);
-    process.exit();
-  } catch (error) {
-    console.error(`❌ Badge seeding failed: ${error.message}`);
-    process.exit(1);
-  }
-};
-
-seedBadges();
+export default badges;

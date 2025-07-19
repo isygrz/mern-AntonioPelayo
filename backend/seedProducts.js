@@ -1,12 +1,11 @@
-// backend/data.js
-const data = {
+const products = {
   products: [
     {
       sku: '000001',
       name: 'Signature Bianco Matte Ceramic Subway Wall Tile - 3 x 6 in.',
       slug: 'signature-bianco-matte-ceramic-subway-wall-tile',
       badge: 'new',
-      tileCollection: ['Ceramic Wall Tile', 'Signature Tile Collection'], // ✅ renamed
+      tileCollection: ['Ceramic Wall Tile', 'Signature Tile Collection'],
       material: 'Ceramic Tile',
       application: ['Backsplash Tile', 'Wall Tile'],
       imageGallery: ['/images/p1.jpeg'],
@@ -142,4 +141,4 @@ const data = {
   ],
 };
 
-export default data;
+export default products;

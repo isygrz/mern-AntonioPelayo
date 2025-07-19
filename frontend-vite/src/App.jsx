@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast'; // ✅ Import Toaster
 import HomeScreen from './screens/HomeScreen.jsx';
 import ProductScreen from './screens/ProductScreen.jsx';
 import CartScreen from './screens/CartScreen.jsx';
@@ -46,6 +47,9 @@ function App() {
       </main>
 
       <Footer />
+
+      {/* ✅ Add global toaster */}
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
     </div>
   );
 }

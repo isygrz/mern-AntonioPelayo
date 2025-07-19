@@ -775,3 +775,78 @@
   → Eliminated silent frontend render failures from enum mismatches
   → Ensured CMS sections can be reliably seeded and rendered without manual mapping
   → Ready to support dynamic visual blocks configured in MongoDB and displayed in React
+
+60. PromoGridSection Component + CMS Integration
+
+- Added `<PromoGridSection />` component to render promotional tile grids on the homepage
+- CMS-driven: renders when CMS contains `type: 'promoGrid'`
+- Component includes:
+  → Grid layout with images, titles, and optional descriptions
+  → Hardcoded demo tiles; backend CMS integration planned
+- Verified in SectionRenderer:
+  → Matches 'promoGrid' via updated camelCase switch block
+- CMS Seeding:
+  → Added `promoGrid` to homepage sections via `seedCms.js`
+  → Order = 2 (after hero, before blogPreview)
+- Outcome:
+  → PromoGrid now part of modular CMS layout system
+  → Sets foundation for dynamic merchandising tiles
+
+61. CMS Layout Editor Save & Sync (Multi-Route)
+
+- Created frontend updateCms thunk in cmsSlice.js to persist CMS layout changes via:
+  → PATCH /api/cms with { route, sections }
+- Refactored SettingsManager.jsx to:
+  → Include "Save Layout" button
+  → Use Redux to dispatch updated CMS layout
+  → Handle backend response status (success, error)
+  → Enforce a maximum of 6 sections per route
+- Drag-and-drop and reorder buttons update local and Redux section order
+- Auto-fetches correct CMS layout when admin selects a different route
+- Synced with backend via cmsRoutes.js:
+  → PATCH request saves updated section order for each route
+- Fully supports multi-route CMS management:
+  → Admin can edit visual section layout for /, /products, /blog, /about, /contact
+- Ready for future expansion: new section types, per-route customization, layout preview
+
+62. Add/Edit CMS Section Modal
+
+- Introduced <AddEditSectionModal /> using Headless UI’s <Dialog> to provide admin users with the ability to edit individual CMS section configurations
+- Modal appears upon clicking ✏️ Edit in <SectionRow /> and renders dynamically based on the section.type
+- Field values are initialized from the current section.settings object and written back upon save
+
+63. CMS Schema-Driven Config Engine
+
+- Added cmsSchema.js to centralize editable field configurations per CMS section type
+- Schema allows each section type to define editable fields like:
+  → text, textarea, toggle, select
+- Used by <AddEditSectionModal /> to dynamically render field inputs
+
+64. SectionRow Integration (Edit, Toggle, Reorder, Preview)
+
+- Updated SectionRow.jsx to support:
+  → Enable/Disable toggle
+  → Edit button (opens modal)
+  → Remove button
+  → Reorder support wired via onReorder(fromIndex, toIndex)
+- Each section now renders a real-time preview using <SectionRenderer />
+
+65. SectionRenderer Component
+
+- Refactored <SectionRenderer /> to dynamically render any supported CMS section based on its type
+- Each section receives settings props populated by its section.settings config
+- Renders a matching visual section stub (e.g., <PromoGridSection />, <QuoteBlockSection />, etc.)
+
+66. Visual Section Component Stubs
+
+- All 18 CMS section components scaffolded as placeholders for preview/rendering
+  → Includes: PromoGridSection.jsx, QuoteBlockSection.jsx, CarouselSection.jsx, etc.
+- Each stub accepts settings as a prop (for future visual and data binding)
+
+67. Toast Notification Integration
+
+- Installed and configured react-hot-toast
+- Added <Toaster /> to global UI in App.jsx
+- Used toast.success() and toast.error() in:
+  → SettingsManager.jsx → layout save success/failure
+  → AddEditSectionModal.jsx → config save confirmation
