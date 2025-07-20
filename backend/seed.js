@@ -1,44 +1,27 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import connectDB from './db.js';
 
-import User from './models/User.js';
-import Product from './models/Product.js';
-import Order from './models/Order.js';
-import Badge from './models/Badge.js';
-import Blog from './models/Blog.js';
-import CMS from './models/CMS.js';
-import Footer from './models/Footer.js';
-
-import users from './seedUsers.js';
-import productData from './seedProducts.js';
-import badges from './seedBadges.js';
-import blogs from './seedBlogs.js';
-import footerData from './seedFooter.js';
+import seedUsers from './seedUsers.js';
+import seedProducts from './seedProducts.js';
+import seedOrders from './seedOrders.js';
+import seedBadges from './seedBadges.js';
+import seedBlogs from './seedBlogs.js';
+import seedFooter from './seedFooter.js';
 import seedCMS from './seedCms.js';
 
 dotenv.config();
 await connectDB();
 
 const flags = new Set(process.argv.slice(2));
-const { products } = productData;
 
 const seedAll = async () => {
   try {
-    await User.deleteMany();
-    await Product.deleteMany();
-    await Order.deleteMany();
-    await Badge.deleteMany();
-    await Blog.deleteMany();
-    await CMS.deleteMany();
-    await Footer.deleteMany();
-
-    await User.insertMany(users);
-    await Product.insertMany(products);
-    await Badge.insertMany(badges);
-    await Blog.insertMany(blogs);
-    await Footer.insertMany(footerData);
-
+    await seedUsers();
+    await seedProducts();
+    await seedOrders();
+    await seedBadges();
+    await seedBlogs();
+    await seedFooter();
     await seedCMS();
 
     console.log('✅ All Data Seeded');
@@ -51,46 +34,13 @@ const seedAll = async () => {
 
 const seedSingle = async () => {
   try {
-    if (flags.has('--users')) {
-      await User.deleteMany();
-      await User.insertMany(users);
-      console.log('✅ Seeded Users');
-    }
-
-    if (flags.has('--products')) {
-      await Product.deleteMany();
-      await Product.insertMany(products);
-      console.log('✅ Seeded Products');
-    }
-
-    if (flags.has('--orders')) {
-      await Order.deleteMany();
-      console.log('✅ Cleared Orders');
-    }
-
-    if (flags.has('--badges')) {
-      await Badge.deleteMany();
-      await Badge.insertMany(badges);
-      console.log('✅ Seeded Badges');
-    }
-
-    if (flags.has('--blogs')) {
-      await Blog.deleteMany();
-      await Blog.insertMany(blogs);
-      console.log('✅ Seeded Blogs');
-    }
-
-    if (flags.has('--cms')) {
-      await CMS.deleteMany();
-      await seedCMS();
-      console.log('✅ Seeded CMS');
-    }
-
-    if (flags.has('--footer')) {
-      await Footer.deleteMany();
-      await Footer.insertMany(footerData);
-      console.log('✅ Seeded Footer');
-    }
+    if (flags.has('--users')) await seedUsers();
+    if (flags.has('--products')) await seedProducts();
+    if (flags.has('--orders')) await seedOrders();
+    if (flags.has('--badges')) await seedBadges();
+    if (flags.has('--blogs')) await seedBlogs();
+    if (flags.has('--footer')) await seedFooter();
+    if (flags.has('--cms')) await seedCMS();
 
     process.exit();
   } catch (err) {

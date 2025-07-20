@@ -1,3 +1,9 @@
+import dotenv from 'dotenv';
+import connectDB from './db.js';
+import Badge from './models/Badge.js';
+
+dotenv.config();
+
 const badges = [
   {
     name: 'New',
@@ -16,4 +22,17 @@ const badges = [
   },
 ];
 
-export default badges;
+export default async function seedBadges() {
+  try {
+    await connectDB();
+    await Badge.deleteMany();
+    await Badge.insertMany(badges);
+    console.log(`✅ Seeded ${badges.length} badges`);
+  } catch (err) {
+    console.error('❌ Badge seeding failed:', err.message);
+  }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedBadges();
+}

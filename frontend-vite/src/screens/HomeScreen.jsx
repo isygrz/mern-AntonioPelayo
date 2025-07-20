@@ -23,7 +23,6 @@ const HomeScreen = () => {
     dispatch(fetchCmsByRoute('/'));
   }, [dispatch]);
 
-  // ✅ Debug log to confirm section rendering
   useEffect(() => {
     if (sections?.length) {
       console.log('📦 CMS sections passed to renderer:', sections);

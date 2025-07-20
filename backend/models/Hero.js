@@ -12,5 +12,5 @@ const heroSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Hero = mongoose.model('Hero', heroSchema);
+const Hero = mongoose.models.Hero || mongoose.model('Hero', heroSchema);
 export default Hero;

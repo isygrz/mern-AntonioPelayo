@@ -5,7 +5,7 @@ export const fetchCmsByRoute = createAsyncThunk(
   'cms/fetchCmsByRoute',
   async (route = '/', { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`/api/cms?route=${route}`);
+      const { data } = await axios.get(`/cms?route=${route}`);
       return { ...data, route };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -39,7 +39,7 @@ const cmsSlice = createSlice({
       state.success = false;
       state.error = null;
     },
-    reorderSections: (state, action) => {
+    reorderCmsSections: (state, action) => {
       state.sections = action.payload;
     },
   },
@@ -74,5 +74,5 @@ const cmsSlice = createSlice({
   },
 });
 
-export const { resetCmsStatus, reorderSections } = cmsSlice.actions;
+export const { resetCmsStatus, reorderCmsSections } = cmsSlice.actions;
 export default cmsSlice.reducer;

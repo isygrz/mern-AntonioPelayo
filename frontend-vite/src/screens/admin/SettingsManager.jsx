@@ -6,21 +6,41 @@ import {
   resetCmsStatus,
   reorderCmsSections,
 } from '@/redux/slices/cmsSlice';
+
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+
 import { v4 as uuidv4 } from 'uuid';
-import SortableItem from '@/components/SortableItem';
-import SectionRow from '@/components/SectionRow';
 import toast from 'react-hot-toast';
+
+import SortableItem from '@/components/admin/SortableItem';
+import SectionRow from '@/components/admin/SectionRow';
 import AddEditSectionModal from '@/components/modals/AddEditSectionModal';
 
-import HeroSection from '@/components/HeroSection';
-import PromoGridSection from '@/components/PromoGridSection';
-import BlogPreviewSection from '@/components/BlogPreviewSection';
+// ✅ CMS Section Preview Components
+import HeroSection from '@/components/sections/HeroSection';
+import PromoGridSection from '@/components/sections/PromoGridSection';
+import BlogPreviewSection from '@/components/sections/BlogPreviewSection';
+import TestimonialSection from '@/components/sections/TestimonialSection';
+import NewsletterSignupSection from '@/components/sections/NewsletterSignupSection';
+import CtaBannerSection from '@/components/sections/CtaBannerSection';
+import ImageGallerySection from '@/components/sections/ImageGallerySection';
+import QuoteBlockSection from '@/components/sections/QuoteBlockSection';
+import FeatureListSection from '@/components/sections/FeatureListSection';
+import DividerSection from '@/components/sections/DividerSection';
+import VideoEmbedSection from '@/components/sections/VideoEmbedSection';
+import FaqAccordionSection from '@/components/sections/FaqAccordionSection';
+import EventCountdownSection from '@/components/sections/EventCountdownSection';
+import MapEmbedSection from '@/components/sections/MapEmbedSection';
+import CustomHtmlSection from '@/components/sections/CustomHtmlSection';
+import CarouselSection from '@/components/sections/CarouselSection';
+import CollectionShowcaseSection from '@/components/sections/CollectionShowcaseSection';
+import ProductHighlightSection from '@/components/sections/ProductHighlightSection';
+import SocialEmbedSection from '@/components/sections/SocialEmbedSection';
 
 const DEFAULT_SECTION = {
   enabled: true,
@@ -54,6 +74,22 @@ const sectionPreviews = {
   hero: HeroSection,
   promoGrid: PromoGridSection,
   blogPreview: BlogPreviewSection,
+  testimonial: TestimonialSection,
+  newsletterSignup: NewsletterSignupSection,
+  ctaBanner: CtaBannerSection,
+  imageGallery: ImageGallerySection,
+  quoteBlock: QuoteBlockSection,
+  featureList: FeatureListSection,
+  divider: DividerSection,
+  videoEmbed: VideoEmbedSection,
+  faqAccordion: FaqAccordionSection,
+  eventCountdown: EventCountdownSection,
+  mapEmbed: MapEmbedSection,
+  customHTML: CustomHtmlSection,
+  carousel: CarouselSection,
+  collectionShowcase: CollectionShowcaseSection,
+  productHighlight: ProductHighlightSection,
+  socialEmbed: SocialEmbedSection,
 };
 
 const SettingsManager = () => {

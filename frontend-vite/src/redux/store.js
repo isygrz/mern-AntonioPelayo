@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import authReducer from './slices/authSlice';
 import productReducer from './slices/productSlice';
+import productDetailsReducer from './slices/productDetailsSlice'; // ✅ Product details by slug
 import cartReducer from './slices/cartSlice';
 import orderReducer from './slices/orderSlice';
 import blogReducer from './slices/blogSlice';
@@ -14,6 +15,7 @@ const store = configureStore({
   reducer: {
     auth: authReducer, // User authentication (JWT + guest sessions)
     products: productReducer, // Full product catalog and CRUD
+    productDetails: productDetailsReducer, // ✅ Single product details via slug
     cart: cartReducer, // Guest/user cart state
     order: orderReducer, // Order creation and tracking
     blog: blogReducer, // Blog CMS (list + post)

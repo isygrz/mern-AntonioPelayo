@@ -9,8 +9,10 @@ import Hero from './models/Hero.js';
 import Order from './models/Order.js';
 import Product from './models/Product.js';
 import User from './models/User.js';
+import CMS from './models/Cms.js';
+import Footer from './models/Footer.js'; // Optional: only if Footer model exists
 
-// DB connect
+// Connect to DB
 import connectDB from './db.js';
 
 dotenv.config();
@@ -24,48 +26,37 @@ const validFlags = [
   '--orders',
   '--products',
   '--users',
+  '--cms',
+  '--footers',
+  '--all',
 ];
 
 const clearCollections = async () => {
   try {
     const tasks = [];
 
-    if (args.includes('--badges')) {
-      tasks.push(
-        Badge.deleteMany().then(() => console.log('🧼 Cleared Badges'.yellow))
-      );
-    }
-    if (args.includes('--blogs')) {
-      tasks.push(
-        Blog.deleteMany().then(() => console.log('🧼 Cleared Blogs'.yellow))
-      );
-    }
-    if (args.includes('--heroes')) {
-      tasks.push(
-        Hero.deleteMany().then(() => console.log('🧼 Cleared Heroes'.yellow))
-      );
-    }
-    if (args.includes('--orders')) {
-      tasks.push(
-        Order.deleteMany().then(() => console.log('🧼 Cleared Orders'.yellow))
-      );
-    }
-    if (args.includes('--products')) {
-      tasks.push(
-        Product.deleteMany().then(() =>
-          console.log('🧼 Cleared Products'.yellow)
-        )
-      );
-    }
-    if (args.includes('--users')) {
-      tasks.push(
-        User.deleteMany().then(() => console.log('🧼 Cleared Users'.yellow))
-      );
-    }
+    const addTask = (flag, model, name) => {
+      if (args.includes(flag) || args.includes('--all')) {
+        tasks.push(
+          model
+            .deleteMany()
+            .then(() => console.log(`🧼 Cleared ${name}`.yellow))
+        );
+      }
+    };
+
+    addTask('--badges', Badge, 'Badges');
+    addTask('--blogs', Blog, 'Blogs');
+    addTask('--heroes', Hero, 'Heroes');
+    addTask('--orders', Order, 'Orders');
+    addTask('--products', Product, 'Products');
+    addTask('--users', User, 'Users');
+    addTask('--cms', CMS, 'CMS Layouts');
+    addTask('--footers', Footer, 'Footers'); // Skip if you don’t have Footer model
 
     if (tasks.length === 0) {
       console.log(
-        '⚠️  No valid flags provided. Use any of:',
+        '⚠️  No valid flags provided. Use any of:'.red,
         validFlags.join(', ').cyan
       );
       process.exit();

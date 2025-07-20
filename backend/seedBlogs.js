@@ -1,20 +1,30 @@
+import dotenv from 'dotenv';
+import connectDB from './db.js';
+import Blog from './models/Blog.js';
+
+dotenv.config();
+
 const blogs = [
   {
-    title: 'Behind the Brush: Antonio’s Process',
-    slug: 'behind-the-brush',
-    image: '/uploads/hero1.jpg',
-    content: 'Explore the layered storytelling in each brushstroke...',
-    author: 'Antonio Pelayo',
-    published: true,
-  },
-  {
-    title: 'Traditions in Color',
-    slug: 'traditions-in-color',
-    image: '/uploads/hero2.jpg',
-    content: 'A visual journey through Mexican culture...',
-    author: 'Antonio Pelayo',
-    published: true,
+    title: 'Welcome to Our Blog',
+    slug: 'welcome-blog',
+    content: '<p>This is the first blog post!</p>',
+    image: '/uploads/blog1.jpg',
+    author: 'Admin',
   },
 ];
 
-export default blogs;
+export default async function seedBlogs() {
+  try {
+    await connectDB();
+    await Blog.deleteMany();
+    await Blog.insertMany(blogs);
+    console.log(`✅ Seeded ${blogs.length} blogs`);
+  } catch (err) {
+    console.error('❌ Blog seeding failed:', err.message);
+  }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedBlogs();
+}

@@ -65,6 +65,7 @@ const cmsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const CMS = mongoose.model('CMS', cmsSchema);
+// ✅ Prevent OverwriteModelError during dev or HMR
+const CMS = mongoose.models.CMS || mongoose.model('CMS', cmsSchema);
 
 export default CMS;

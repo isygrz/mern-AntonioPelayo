@@ -6,7 +6,12 @@ import { BrowserRouter } from 'react-router-dom';
 import store from './redux/store.js';
 import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+// ✅ Import thunks you want to test
+import { fetchAllProducts } from './redux/slices/productSlice.js';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
@@ -15,3 +20,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </Provider>
   </React.StrictMode>
 );
+
+// ✅ DEV ONLY: Expose Redux store and thunks for manual dispatch in browser
+if (import.meta.env.MODE === 'development' && typeof window !== 'undefined') {
+  window.store = store;
+  window.fetchAllProducts = fetchAllProducts;
+
+  // 🧽 Optional: log once to confirm they're available
+  console.log('🧪 Redux store and thunks exposed on window');
+}

@@ -850,3 +850,169 @@
 - Used toast.success() and toast.error() in:
   → SettingsManager.jsx → layout save success/failure
   → AddEditSectionModal.jsx → config save confirmation
+
+68. Modularized Seed Data Files
+
+- Replaced legacy `data.js` with fully modular seed scripts:
+  → `/backend/seedProducts.js`
+  → `/backend/seedUsers.js`
+  → `/backend/seedBlogs.js`
+  → `/backend/seedBadges.js`
+  → `/backend/seedHeroes.js`
+  → `/backend/seedOrders.js`
+  → `/backend/seedCms.js`
+- Updated `seedRoutes.js` to use ES module imports from these files
+  → Ensures consistent data structure and separation of concerns
+  → Avoids single-point failure and enables targeted seeding
+- All seed files now use `export const` instead of `export default` for named export consistency
+
+69. Model Safety Refactor (Prevent OverwriteModelError)
+
+- Added Mongoose model safety guards to all model files to prevent `OverwriteModelError`
+  → const CMS = mongoose.models.CMS || mongoose.model("CMS", cmsSchema);
+- Affected model files:
+  → `/models/CMS.js`
+  → `/models/Product.js`
+  → `/models/User.js`
+  → `/models/Order.js`
+  → `/models/Badge.js`
+  → `/models/Blog.js`
+  → `/models/Footer.js`
+  → `/models/Hero.js`
+
+70. Controller Review and Standardization
+
+- All controller files reviewed and aligned with new seed/model logic
+- Ensured each controller:
+  → Uses async/await with proper error handling
+  → Validates Mongoose data using `.validate()` where needed
+  → References correct model instance (e.g., CMS vs Cms)
+- Reviewed controllers:
+  → `productController.js`
+  → `userController.js`
+  → `orderController.js`
+  → `blogController.js`
+  → `badgeController.js`
+  → `footerController.js`
+  → `heroController.js`
+  → `cmsController.js`
+
+71. `clear.js` Script Update for Case-Safe Imports
+
+- Adjusted imports in `/backend/clear.js` to resolve casing issues on Windows
+- Ensured all model imports match exact filename casing (e.g., `CMS.js`, not `Cms.js`)
+- Avoids TS error 1149 (file included with different casing)
+- Confirmed `clear.js` supports selective MongoDB collection wiping with CLI prompts
+
+72. Added Optional `seedTest.js` Script
+
+- Introduced `/backend/seedTest.js` to support partial seeding during development
+  → Allows seeding only key collections like products, CMS, and users
+  → Useful for test environments or sandbox resets
+- Can be extended or parameterized in future for CI/CD scenarios
+
+73. Placeholder Previews for CMS Sections
+
+- Added scaffolded React component placeholders for all CMS section types
+- Rendered with unique colors and labels (e.g., `<HeroSection /> Placeholder`)
+- Ensures that:
+  → CMS visual layout displays even if config is empty
+  → Admin preview of section ordering and existence is enabled
+- Example section types scaffolded:
+  → HeroSection, PromoGridSection, BlogPreviewSection, TestimonialSection, NewsletterSignupSection, etc.
+
+74. `/settings` CMS Editor Preview Improvements
+
+- Dynamic placeholder components now render live previews in the admin layout manager
+- Each section preview styled with Tailwind and conditionally rendered based on `section.type`
+- Color-coded blocks make UI section hierarchy easy to audit
+- Supports full visual preview and admin drag/sort flow
+
+75. Project Integrity Verified Post-Refactor
+
+- MongoDB reconnected and fully functional with new seed structure
+- Vite frontend confirms preview rendering and CMS API routing success
+- Backend startup validated via `nodemon server.js` with no model overwrite errors
+
+76. Redux Product Details State + ProductScreen Slug Fetching
+
+- Created productDetailsSlice.js with Redux Toolkit:
+  → Handles async thunk fetchProductBySlug(slug)
+  → Populates Redux state under productDetails.product
+- Updated ProductScreen.jsx:
+  → Extracts slug from URL params
+  → Dispatches fetchProductBySlug(slug) on mount
+  → Selects and renders productDetails.product from Redux state
+- Registered productDetailsReducer in store.js
+
+77. API Endpoint: GET /api/products/slug/:slug
+
+- Added Express route: GET /api/products/slug/:slug
+- Updated productRoutes.js to include:
+  → router.get('/slug/:slug', getProductBySlug);
+- Added getProductBySlug to productController.js:
+  → Uses Product.findOne({ slug })
+  → Returns 404 if not found
+  → Returns product object otherwise
+- Ensures alignment between frontend slug logic and MongoDB queries
+
+78. Redux DevTools Integration + Debug Setup
+
+- Exposed Redux store and thunks via window.**APP**:
+  → Implemented in main.jsx
+  → Enables running thunks like window.**APP**.dispatch(fetchAllProducts()) from browser
+
+79. Redux Product Slice State Refactor
+
+- Updated productSlice.js:
+  → Ensured state shape follows { products: [], loading: false, error: null }
+  → Renamed/reorganized internal state.products to better match fulfilled payload shape
+  → Avoided accidental shadowing with top-level slice name
+- Updated HomeScreen.jsx:
+  → Uses useSelector((state) => state.products.products) to access correct level
+  → Conditional loading logic based on loading and error values
+
+80. Redux Null State Debug Fixes
+
+- Resolved bug where Redux state showed null for productDetails.product
+  → Confirmed productDetailsSlice.js initial state
+  → Confirmed payload from backend is fully hydrated
+- Verified final working state with DevTools snapshot and frontend display
+
+81. Eliminated Duplicate MongoDB Connection Logs
+
+- Diagnosed repeated MONGODB_URI + ✅ MongoDB connected log messages:
+  → Cause: connectDB() called in every seed script
+- Solution:
+  → Refactored all seed files to avoid implicit connectDB() duplication
+
+82. Modular Seeding Script Refactors
+
+- All seed scripts now follow a consistent pattern:
+- Uses if (import.meta.url === ...) to support CLI use
+- Each seed file:
+  → Connects to DB once
+  → Deletes existing collection entries
+  → Inserts fresh mock data
+  → Logs count seeded
+- List of refactored scripts:
+  Optional: Cleanup Later
+  → seedUsers.js
+  → seedProducts.js
+  → seedOrders.js
+  → seedBadges.js
+  → seedBlogs.js
+  → seedHeroes.js
+  → seedFooter.js
+  → seedCms.js
+
+83. Central seed.js Delegation
+
+- Rewrote seed.js to call individual seed scripts directly:
+  → await seedUsers();
+  → await seedProducts();
+- Removed legacy bulk deleteMany() / insertMany() in favor of modular design
+- Outcome:
+  → Cleaner CLI control
+  → Eliminates duplicate DB connects
+  → Easier to maintain and isolate bugs

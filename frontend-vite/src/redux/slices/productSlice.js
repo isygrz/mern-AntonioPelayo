@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '@/utils/axiosInstance';
 
+// Async thunks
 export const fetchAllProducts = createAsyncThunk(
   'products/fetchAll',
   async (_, thunkAPI) => {
@@ -60,6 +61,7 @@ export const deleteProduct = createAsyncThunk(
   }
 );
 
+// Slice
 const productSlice = createSlice({
   name: 'products',
   initialState: {
@@ -82,11 +84,9 @@ const productSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(createProduct.fulfilled, (state, action) => {
         state.items.push(action.payload);
       })
-
       .addCase(updateProduct.fulfilled, (state, action) => {
         const index = state.items.findIndex(
           (p) => p._id === action.payload._id
@@ -95,7 +95,6 @@ const productSlice = createSlice({
           state.items[index] = action.payload;
         }
       })
-
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.items = state.items.filter((p) => p._id !== action.payload);
       });

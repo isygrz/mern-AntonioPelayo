@@ -1,25 +1,25 @@
 import React from 'react';
-import HeroSection from './HeroSection';
-import PromoGridSection from './PromoGridSection';
-import BlogPreviewSection from './BlogPreviewSection';
+import HeroSection from './sections/HeroSection';
+import PromoGridSection from './sections/PromoGridSection';
+import BlogPreviewSection from './sections/BlogPreviewSection';
 
 // CMS Sections
-import TestimonialSection from './TestimonialSection';
-import NewsletterSignupSection from './NewsletterSignupSection';
-import CtaBannerSection from './CtaBannerSection';
-import ImageGallerySection from './ImageGallerySection';
-import QuoteBlockSection from './QuoteBlockSection';
-import FeatureListSection from './FeatureListSection';
-import DividerSection from './DividerSection';
-import VideoEmbedSection from './VideoEmbedSection';
-import FaqAccordionSection from './FaqAccordionSection';
-import EventCountdownSection from './EventCountdownSection';
-import MapEmbedSection from './MapEmbedSection';
-import CustomHtmlSection from './CustomHtmlSection';
-import CarouselSection from './CarouselSection';
-import CollectionShowcaseSection from './CollectionShowcaseSection';
-import ProductHighlightSection from './ProductHighlightSection';
-import SocialEmbedSection from './SocialEmbedSection';
+import TestimonialSection from './sections/TestimonialSection';
+import NewsletterSignupSection from './sections/NewsletterSignupSection';
+import CtaBannerSection from './sections/CtaBannerSection';
+import ImageGallerySection from './sections/ImageGallerySection';
+import QuoteBlockSection from './sections/QuoteBlockSection';
+import FeatureListSection from './sections/FeatureListSection';
+import DividerSection from './sections/DividerSection';
+import VideoEmbedSection from './sections/VideoEmbedSection';
+import FaqAccordionSection from './sections/FaqAccordionSection';
+import EventCountdownSection from './sections/EventCountdownSection';
+import MapEmbedSection from './sections/MapEmbedSection';
+import CustomHtmlSection from './sections/CustomHtmlSection';
+import CarouselSection from './sections/CarouselSection';
+import CollectionShowcaseSection from './sections/CollectionShowcaseSection';
+import ProductHighlightSection from './sections/ProductHighlightSection';
+import SocialEmbedSection from './sections/SocialEmbedSection';
 
 const SectionRenderer = ({ sections = [], blogs = [] }) => {
   if (!sections.length) {

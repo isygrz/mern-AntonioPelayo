@@ -1,42 +1,30 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import Hero from './models/Hero.js';
 import connectDB from './db.js';
+import Hero from './models/Hero.js';
 
 dotenv.config();
 
-const heroes = [
+const heroSeed = [
   {
-    heading: 'Summer Ceramic Drop',
-    subheading: 'Explore bold colors and hand-fired texture.',
-    image: '/uploads/promo-hero1.jpg',
-    ctaText: 'Browse New Arrivals',
-    ctaLink: '/products',
-    active: true,
-    placement: 'homepage',
-  },
-  {
-    heading: 'Traditional Meets Modern',
-    subheading: 'Handcrafted tiles with a timeless spirit.',
-    image: '/uploads/promo-hero2.jpg',
-    ctaText: 'Shop Collections',
-    ctaLink: '/',
-    active: false,
-    placement: 'homepage',
+    heading: 'Timeless Design, Handmade in Jalisco',
+    subheading: 'Explore our artisan tiles and bring heritage to your home.',
+    image: '/uploads/hero-1.jpg',
+    ctaText: 'Shop Now',
+    ctaUrl: '/shop',
   },
 ];
 
-const seedHeroes = async () => {
+export default async function seedHeroes() {
   try {
     await connectDB();
     await Hero.deleteMany();
-    const created = await Hero.insertMany(heroes);
-    console.log(`✅ Seeded ${created.length} heroes`);
-    process.exit();
-  } catch (error) {
-    console.error(`❌ Hero seeding failed: ${error.message}`);
-    process.exit(1);
+    await Hero.insertMany(heroSeed);
+    console.log('✅ Hero section seeded!');
+  } catch (err) {
+    console.error('❌ Hero seeding failed:', err.message);
   }
-};
+}
 
-seedHeroes();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedHeroes();
+}

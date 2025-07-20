@@ -1,17 +1,37 @@
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useState } from 'react';
 import { addToCart } from '../redux/slices/cartSlice';
+import { fetchProductById } from '../redux/slices/productDetailsSlice';
 
 function ProductScreen() {
   const dispatch = useDispatch();
   const { slug } = useParams();
-  const product = useSelector((state) =>
-    state.products.items.find((item) => item.slug === slug)
+
+  const { product, loading, error } = useSelector(
+    (state) => state.productDetails
   );
 
-  const [selectedImage, setSelectedImage] = useState(product?.imageGallery);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    dispatch(fetchProductById(slug));
+  }, [dispatch, slug]);
+
+  useEffect(() => {
+    if (product?.imageGallery) {
+      setSelectedImage(product.imageGallery);
+    }
+  }, [product]);
+
+  if (loading) {
+    return <div className="p-6 text-gray-500">Loading product...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-red-500">Error: {error}</div>;
+  }
 
   if (!product) {
     return <div className="p-6 text-red-500">Product not found.</div>;
@@ -39,17 +59,16 @@ function ProductScreen() {
               product.imageGallery,
               product.imageGallery,
               product.imageGallery,
-            ].map((img, index) => (
+            ].map((img, i) => (
               <img
-                key={index}
+                key={i}
                 src={img}
-                alt={`Thumbnail ${index + 1}`}
+                alt={`Thumbnail ${i + 1}`}
                 className="w-16 h-16 object-cover border cursor-pointer hover:border-black"
                 onClick={() => setSelectedImage(img)}
               />
             ))}
           </div>
-
           <div className="flex-1">
             <img
               src={selectedImage}
@@ -66,7 +85,6 @@ function ProductScreen() {
             #SKU123456 &nbsp; | &nbsp; Coverage: 21.53 sq. ft./box
           </div>
 
-          {/* Pricing Fields */}
           <div className="text-2xl font-bold text-gray-800">
             ${product?.pricing?.perBox?.toFixed(2) || '—'}/box
           </div>
@@ -87,7 +105,6 @@ function ProductScreen() {
             </div>
           </div>
 
-          {/* Quantity Picker */}
           <div className="flex items-center gap-2 mt-4">
             <label htmlFor="quantity" className="text-sm font-semibold">
               Boxes
@@ -102,7 +119,6 @@ function ProductScreen() {
             />
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col gap-3 mt-4">
             <button
               onClick={handleAddToCart}

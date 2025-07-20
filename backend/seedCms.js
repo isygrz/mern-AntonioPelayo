@@ -1,11 +1,9 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import connectDB from './db.js';
 import CMS from './models/CMS.js';
 import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
-await connectDB();
 
 const cmsSeed = [
   {
@@ -144,10 +142,15 @@ const cmsSeed = [
 
 export default async function seedCMS() {
   try {
+    await connectDB();
     await CMS.deleteMany();
     await CMS.insertMany(cmsSeed);
     console.log('✅ CMS seeded!');
   } catch (err) {
     console.error('❌ CMS seeding failed:', err.message);
   }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedCMS();
 }
