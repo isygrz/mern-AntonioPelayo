@@ -6,8 +6,10 @@ import { BrowserRouter } from 'react-router-dom';
 import store from './redux/store.js';
 import './index.css';
 
-// ✅ Import thunks you want to test
+// ✅ Import thunks for DevTools or optional DebugPanel
 import { fetchAllProducts } from './redux/slices/productSlice.js';
+import { fetchAllBlogs } from './redux/slices/blogSlice.js';
+import { updateCmsLayout } from './redux/slices/cmsSlice.js';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -25,7 +27,8 @@ root.render(
 if (import.meta.env.MODE === 'development' && typeof window !== 'undefined') {
   window.store = store;
   window.fetchAllProducts = fetchAllProducts;
+  window.fetchAllBlogs = fetchAllBlogs;
+  window.updateCmsLayout = updateCmsLayout;
 
-  // 🧽 Optional: log once to confirm they're available
   console.log('🧪 Redux store and thunks exposed on window');
 }

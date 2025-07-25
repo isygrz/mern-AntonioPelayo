@@ -1016,3 +1016,217 @@
   → Cleaner CLI control
   → Eliminates duplicate DB connects
   → Easier to maintain and isolate bugs
+
+84. Centralized CMS Schema System (`cmsSchema.js`)
+
+- Created `frontend-vite/src/config/cmsSchema.js` to serve as the centralized field registry per section `type`
+  → Defines which fields each CMS section (e.g. `hero`, `faqAccordion`, etc.) should include in its `config` object
+- This registry powers:
+  → Auto-population of section config defaults
+  → Dynamic config field rendering in admin modals
+  → Cleaner decoupled logic across admin CMS tools
+
+85. Auto-Populate Section Config in Add/Edit Modal
+
+- Enhanced `AddEditSectionModal.jsx` to auto-fill `config` fields when a user selects a section `type`
+- Upon changing the `<select>` input for section type, the modal:
+  → Clears any existing config
+  → Generates an object from `cmsFieldConfig` with empty string values for each field
+  → Enables dynamic editing without requiring manual typing of keys
+- Benefits:
+  → Reduces user errors
+  → Accelerates admin workflow
+  → Keeps backend configs uniform across section types
+
+86. SettingsManager.jsx Dynamic `route` Refactor + Feedback UX
+
+- Removed legacy `selectedRoute` state
+- Injected dynamic route targeting via:
+  → `const { pathname: route } = useLocation()`
+- Updated all layout actions to use this value
+- Updated:
+  → `updateCms` → `updateCmsLayout` for naming clarity
+  → `resetCmsStatus()` continues to handle toast lifecycle
+- Benefit:
+  → No stale state
+  → UX-safe routing logic
+  → ESLint clean
+
+87. CMS Redux Slice Enhancements (`cmsSlice.js`)
+
+- Renamed `updateCms` → `updateCmsLayout` for consistency with `fetchCmsByRoute`
+- Added:
+  → `resetCms()` reducer: clears CMS layout state (used on logout or admin switch)
+  → `success = false` reset during `fetchCmsByRoute.pending` to prevent false-positive UI feedback
+- All loading, success, and error states now managed cleanly
+- Outcome:
+  → Fully route-aware layout slice
+  → Decoupled and production-safe
+
+88. generateSecureId() Utility Abstraction + Token Overhaul
+
+- Abstracted secure token generation into:
+  → `generateSecureId.js`
+- Implementation:
+  → Uses frontend-safe Web Crypto API
+- Refactored All Frontend Token Use:
+  → Replaced all frontend `uuid` or `crypto.randomBytes()` calls with `generateSecureId()`
+  → Ensures cross-browser compatibility without Node polyfills
+- Affected files:
+  - `SettingsManager.jsx`
+  - `MobileSessionLauncher.jsx`
+  - `guestSession.js` (if used in browser context)
+- Outcome:
+  → Secure and consistent token generation
+  → One unified utility for frontend identity/session creation
+  → No more Node-based crypto errors in Webpack/Vite
+
+89. CMS Schema Scaffolding + Auto-Fill Config Behavior
+
+- Implemented centralized field schema via:
+  → `cmsSchema.js`
+- Structure:
+  → Maps each section `type` (e.g. `'hero'`, `'faqAccordion'`, `'ctaBanner'`) to an array of required config fields
+- Integrated into `AddEditSectionModal.jsx` to enable:
+  → Auto-generation of config fields when a section type is selected  
+  → Empty string defaults for all fields  
+  → Support for dynamic form rendering down the line
+- Benefits:
+  → Cleaner admin UX (no manual typing of keys)
+  → Safer backend validation (consistent config structure)
+  → Extensible for future types (just add to `cmsSchema.js`)
+- Outcome:
+  → The system now scaffolds CMS section config reliably on type selection
+  → Admins can manage section blocks quickly without worrying about field shape
+
+90. AddEditSectionModal.jsx Refactor for Schema-Aware Config
+
+- Updated `<AddEditSectionModal />` to integrate with `cmsSchema.js`:
+  → When selecting a section type, the modal auto-fills the config based on that type’s `defaultConfig` entry
+  → Dynamically renders input fields for each config key using `fieldTypes` (e.g. `text`, `textarea`, `image`)
+  → Falls back to string input for any unknown types
+- Changes include:
+  → Importing schema: `import { getDefaultConfig, getFieldTypes } from '../../config/cmsSchema';`
+  → Resets config on type change with: `setSection({ ...section, type, config: getDefaultConfig(type) });`
+  → Generates fields dynamically via mapped `fieldTypes[type]`
+- Benefits:
+  → Eliminates hardcoded config structures
+  → Makes modal future-proof as new section types are added
+  → Clean, DRY field generation for admin editing
+- Outcome:
+  → Modular, scalable modal for visual section editing
+  → Consistent UX across all CMS section types
+
+  91. MobileSessionLauncher.jsx Token Refactor (Frontend Crypto)
+
+- Replaced legacy `uuid` import with secure frontend-compatible ID generator:
+  → `generateSecureId()` from `generateSecureId.js`
+- Applied to mobile QR session flow:
+  → Guest session tokens, device identity, or temporary references now use 128-bit hex IDs from Web Crypto API
+- Eliminated unsafe or Node-only code:
+  → Removed `crypto.randomBytes()` and `uuid.v4()` usage
+  → Ensured no Webpack errors for `crypto` in frontend builds
+- Outcome:
+  → Seamless secure session creation in frontend UI
+  → Polyfill-free browser compatibility
+
+92. guestSession.js Token Strategy Unification
+
+- Replaced `uuid` with shared `generateSecureId()` in guest checkout utilities
+- Ensured any anonymous/guest fallback session logic:
+  → Creates consistent and cryptographically random tokens using Web Crypto
+  → Matches backend session format (128-bit hex)
+- Benefits:
+  → Improved frontend token generation security
+  → Full consistency across session-generating flows
+
+93. CMS Feedback UX Support + Reset State
+
+- Added and wired the following Redux states for CMS layout updates:
+  → `cmsLayout.loading`
+  → `cmsLayout.success`
+  → `cmsLayout.error`
+- In `SettingsManager.jsx`:
+  → Used these to show toast feedback and conditional banners
+  → Auto-cleared feedback via `resetCmsStatus()` after short delay
+- In `cmsSlice.js`:
+  → Added `resetCmsStatus` reducer to clear layout flags
+  → Prevented stale UI by resetting `success` state on fetchCMS start
+- Outcome:
+  → Cleaner user feedback experience in admin
+  → Prevents ghost success/error states across pages
+
+94. ESLint Cleanup + Route Usage Reinstated
+
+- Resolved unused variable warning for `route` in `SettingsManager.jsx`:
+  → Reintroduced it as an active prop for layout PATCH requests
+- Used dynamically from:
+  → `const { pathname: route } = useLocation();`
+- Benefit:
+  → ESLint-clean and logically correct
+  → Route-scoped CMS layout sync persists across all admin pages
+
+95. Mobile Session Middleware Implementation (verifyMobileSessionMiddleware.js)
+
+- Created verifyMobileSessionMiddleware.js in backend/middleware/:
+  → Wraps async session validation via verifyMobileSession(token)
+  → Extracts token from req.headers['x-mobile-session-token'] or req.query.token
+  → Attaches session to req.mobileSession for downstream handlers
+- Built on top of:
+  → utils/verifyMobileSession.js (session token validation logic)
+- Middleware improves:
+  → Consistency in token validation across route files
+  → Reusability for mobile-specific session workflows
+
+96. Middleware Injection into Route Files
+
+- Injected verifyMobileSessionMiddleware into key backend route files:
+  → mobileSessionRoutes.js (entire route)
+  → orderRoutes.js (mobile route group only)
+  → productRoutes.js (for mobile session inventory ops)
+  → uploadRoutes.js (potential future image logging or QR scans)
+  → userRoutes.js (for mobile session profile handling)
+- Ensures all mobile-authenticated operations validate tokens securely
+- Outcome:
+  → Mobile workflows now supported in backend APIs
+  → Granular control over which endpoints require mobile auth
+
+97. Node Crypto Usage Clarification (Backend Only)
+
+- Confirmed backend uses Node's built-in crypto.randomBytes():
+  → Used for generating secure mobile session tokens (128-bit hex)
+  → No need to install crypto from npm
+  → Deprecated npm install crypto was avoided
+
+98. generateSecureId.js Token Utility Verification (Frontend)
+
+- Audited generateSecureId.js to confirm:
+  → Uses window.crypto.getRandomValues() correctly
+  → Generates 128-bit (16-byte) token in lowercase hex format
+- Output:
+  → 32-character secure token: consistent with backend format
+- Safe for all modern browsers — no polyfill or UUID needed
+- Used in:
+  → SettingsManager.jsx
+  → MobileSessionLauncher.jsx
+  → guestSession.js
+
+99. Removed Legacy uuid Dependency from Frontend
+
+- Frontend previously included unused uuid dependency:
+  → Leftover from earlier token generation approaches
+  → Cleaned up unused packages from node_modules
+- Outcome:
+  → Leaner dependency tree
+  → No frontend crypto errors in Vite/Webpack
+
+# Notes (84 to 99)
+
+→ Integrated centralized CMS schema auto-fill system (cmsSchema.js) and modal config scaffolding
+→ Refactored SettingsManager.jsx for dynamic route handling and layout syncing
+→ Introduced generateSecureId.js utility (Web Crypto API) for secure frontend token generation
+→ Replaced all uuid/crypto.randomBytes frontend calls with generateSecureId()
+→ Implemented verifyMobileSessionMiddleware and injected into key backend routes
+→ Confirmed secure Node crypto usage for backend session generation
+→ Removed unused frontend uuid dependency and pruned node_modules
+→ Added toast-based feedback UX for CMS layout actions via Redux state management

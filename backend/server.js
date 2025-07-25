@@ -17,11 +17,14 @@ import badgeRoutes from './routes/badgeRoutes.js';
 import heroRoutes from './routes/heroRoutes.js';
 import cmsRoutes from './routes/cmsRoutes.js';
 
+// 🧰 Utility Routes
+import mobileSessionRoutes from './routes/mobileSessionRoutes.js'; // ✅ ADDED
+
 // 🧱 Middleware
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 dotenv.config();
-connectDB(); // ✅ Called once here only
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,6 +37,7 @@ app.use(express.json());
 app.use('/api/products', productRoutes);
 app.use('/api/seed', seedRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/mobile-sessions', mobileSessionRoutes); // ✅ ADDED
 
 // 📚 CMS Endpoints
 app.use('/api/blogs', blogRoutes);

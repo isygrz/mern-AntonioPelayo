@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
+dotenv.config({ quiet: true });
 import connectDB from './db.js';
 import Order from './models/Order.js';
-
-dotenv.config();
 
 const orderSeed = [
   {

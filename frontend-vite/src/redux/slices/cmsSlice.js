@@ -13,8 +13,8 @@ export const fetchCmsByRoute = createAsyncThunk(
   }
 );
 
-export const updateCms = createAsyncThunk(
-  'cms/updateCms',
+export const updateCmsLayout = createAsyncThunk(
+  'cms/updateCmsLayout',
   async ({ route, sections }, { rejectWithValue }) => {
     try {
       const { data } = await axios.patch(`/api/cms`, { route, sections });
@@ -42,12 +42,20 @@ const cmsSlice = createSlice({
     reorderCmsSections: (state, action) => {
       state.sections = action.payload;
     },
+    resetCms: (state) => {
+      state.route = '/';
+      state.sections = [];
+      state.loading = false;
+      state.error = null;
+      state.success = false;
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCmsByRoute.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.success = false; // prevent stale success flag
       })
       .addCase(fetchCmsByRoute.fulfilled, (state, action) => {
         state.loading = false;
@@ -58,21 +66,22 @@ const cmsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(updateCms.pending, (state) => {
+      .addCase(updateCmsLayout.pending, (state) => {
         state.loading = true;
         state.success = false;
       })
-      .addCase(updateCms.fulfilled, (state, action) => {
+      .addCase(updateCmsLayout.fulfilled, (state, action) => {
         state.loading = false;
         state.success = true;
         state.sections = action.payload.sections;
       })
-      .addCase(updateCms.rejected, (state, action) => {
+      .addCase(updateCmsLayout.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
   },
 });
 
-export const { resetCmsStatus, reorderCmsSections } = cmsSlice.actions;
+export const { resetCmsStatus, reorderCmsSections, resetCms } =
+  cmsSlice.actions;
 export default cmsSlice.reducer;

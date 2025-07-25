@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
+dotenv.config({ quiet: true });
 import connectDB from './db.js';
 import Product from './models/Product.js';
-
-dotenv.config();
 
 const products = [
   {

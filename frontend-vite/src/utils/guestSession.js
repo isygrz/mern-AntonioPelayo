@@ -1,9 +1,9 @@
-import { v4 as uuidv4 } from 'uuid';
+import { generateSecureId } from '../utils/generateSecureId';
 
 export function getGuestSessionId() {
   let sessionId = localStorage.getItem('guestSessionId');
   if (!sessionId) {
-    sessionId = uuidv4();
+    sessionId = generateSecureId();
     localStorage.setItem('guestSessionId', sessionId);
   }
   return sessionId;

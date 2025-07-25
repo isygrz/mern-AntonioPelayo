@@ -4,10 +4,17 @@ const userSchema = new mongoose.Schema(
   {
     accountType: {
       type: String,
-      enum: ['personal', 'pro'],
+      enum: ['personal', 'vendor'],
       required: true,
       default: 'personal',
     },
+    approved: {
+      type: Boolean,
+      default: function () {
+        return this.accountType === 'personal';
+      },
+    },
+
     isGuest: { type: Boolean, default: false },
     guestSessionId: { type: String },
 

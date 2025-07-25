@@ -1,9 +1,8 @@
 import dotenv from 'dotenv';
+dotenv.config({ quiet: true });
 import bcrypt from 'bcryptjs';
 import connectDB from './db.js';
 import User from './models/User.js';
-
-dotenv.config();
 
 const users = [
   {

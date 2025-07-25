@@ -1,74 +1,53 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import colors from 'colors';
-
-// Load models
-import Badge from './models/Badge.js';
-import Blog from './models/Blog.js';
-import Hero from './models/Hero.js';
-import Order from './models/Order.js';
-import Product from './models/Product.js';
-import User from './models/User.js';
-import CMS from './models/Cms.js';
-import Footer from './models/Footer.js'; // Optional: only if Footer model exists
-
-// Connect to DB
 import connectDB from './db.js';
 
-dotenv.config();
+import User from './models/User.js';
+import Product from './models/Product.js';
+import Order from './models/Order.js';
+import Badge from './models/Badge.js';
+import Blog from './models/Blog.js';
+import CMS from './models/Cms.js';
+import Footer from './models/Footer.js';
+
+dotenv.config({ override: true }); // 🧽 Prevents duplicates during reuse
 await connectDB();
 
-const args = process.argv.slice(2);
-const validFlags = [
-  '--badges',
-  '--blogs',
-  '--heroes',
-  '--orders',
-  '--products',
-  '--users',
-  '--cms',
-  '--footers',
-  '--all',
-];
+const flags = new Set(process.argv.slice(2));
 
-const clearCollections = async () => {
+const clearAll = async () => {
   try {
-    const tasks = [];
+    await User.deleteMany();
+    await Product.deleteMany();
+    await Order.deleteMany();
+    await Badge.deleteMany();
+    await Blog.deleteMany();
+    await CMS.deleteMany();
+    await Footer.deleteMany();
 
-    const addTask = (flag, model, name) => {
-      if (args.includes(flag) || args.includes('--all')) {
-        tasks.push(
-          model
-            .deleteMany()
-            .then(() => console.log(`🧼 Cleared ${name}`.yellow))
-        );
-      }
-    };
-
-    addTask('--badges', Badge, 'Badges');
-    addTask('--blogs', Blog, 'Blogs');
-    addTask('--heroes', Hero, 'Heroes');
-    addTask('--orders', Order, 'Orders');
-    addTask('--products', Product, 'Products');
-    addTask('--users', User, 'Users');
-    addTask('--cms', CMS, 'CMS Layouts');
-    addTask('--footers', Footer, 'Footers'); // Skip if you don’t have Footer model
-
-    if (tasks.length === 0) {
-      console.log(
-        '⚠️  No valid flags provided. Use any of:'.red,
-        validFlags.join(', ').cyan
-      );
-      process.exit();
-    }
-
-    await Promise.all(tasks);
-    console.log('✅ Selected collections cleared successfully'.green);
+    console.log('🧼 All collections cleared');
     process.exit();
-  } catch (error) {
-    console.error(`❌ Error clearing collections: ${error.message}`.red);
+  } catch (err) {
+    console.error('❌ Clear error:', err.message);
     process.exit(1);
   }
 };
 
-clearCollections();
+const clearSingle = async () => {
+  try {
+    if (flags.has('--users')) await User.deleteMany();
+    if (flags.has('--products')) await Product.deleteMany();
+    if (flags.has('--orders')) await Order.deleteMany();
+    if (flags.has('--badges')) await Badge.deleteMany();
+    if (flags.has('--blogs')) await Blog.deleteMany();
+    if (flags.has('--cms')) await CMS.deleteMany();
+    if (flags.has('--footer')) await Footer.deleteMany();
+
+    console.log('🧼 Selected collections cleared');
+    process.exit();
+  } catch (err) {
+    console.error('❌ Clear error:', err.message);
+    process.exit(1);
+  }
+};
+
+flags.size === 0 ? clearAll() : clearSingle();

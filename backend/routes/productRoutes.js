@@ -1,27 +1,23 @@
 import express from 'express';
 import {
-  getAllProducts,
+  getProducts,
   getProductById,
-  getProductBySlug,
   createProduct,
   updateProduct,
   deleteProduct,
 } from '../controllers/productController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
+import verifyMobileSessionMiddleware from '../middleware/verifyMobileSessionMiddleware.js';
 
 const router = express.Router();
 
-// Fetch product by slug — this route must be above the `/:id` route
-router.get('/slug/:slug', getProductBySlug);
+router.get('/', getProducts);
+router.get('/:id', getProductById);
+router.get('/mobile/:id', verifyMobileSessionMiddleware, getProductById); // ➕ secure fallback
 
-// Product collection routes
-router.route('/').get(getAllProducts).post(protect, admin, createProduct);
-
-// Product by ID
-router
-  .route('/:id')
-  .get(getProductById)
-  .put(protect, admin, updateProduct)
-  .delete(protect, admin, deleteProduct);
+// Admin
+router.post('/', protect, admin, createProduct);
+router.put('/:id', protect, admin, updateProduct);
+router.delete('/:id', protect, admin, deleteProduct);
 
 export default router;

@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
+dotenv.config({ quiet: true });
 import connectDB from './db.js';
 import Footer from './models/Footer.js';
-
-dotenv.config();
 
 const footerSeed = [
   {

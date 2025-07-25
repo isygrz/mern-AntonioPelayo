@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
+dotenv.config({ quiet: true });
 import connectDB from './db.js';
 import Hero from './models/Hero.js';
-
-dotenv.config();
 
 const heroSeed = [
   {

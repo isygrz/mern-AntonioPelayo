@@ -1,156 +1,71 @@
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import Cms from './models/Cms.js';
 import connectDB from './db.js';
-import CMS from './models/CMS.js';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 dotenv.config();
+connectDB();
 
-const cmsSeed = [
-  {
-    route: '/',
-    sections: [
-      { id: uuidv4(), type: 'hero', isActive: true, placement: '/', order: 1 },
-      {
-        id: uuidv4(),
-        type: 'promoGrid',
-        isActive: true,
-        placement: '/',
-        order: 2,
-      },
-      {
-        id: uuidv4(),
-        type: 'blogPreview',
-        isActive: true,
-        placement: '/',
-        order: 3,
-      },
-      {
-        id: uuidv4(),
-        type: 'testimonial',
-        isActive: true,
-        placement: '/',
-        order: 4,
-      },
-      {
-        id: uuidv4(),
-        type: 'newsletterSignup',
-        isActive: true,
-        placement: '/',
-        order: 5,
-      },
-      {
-        id: uuidv4(),
-        type: 'ctaBanner',
-        isActive: true,
-        placement: '/',
-        order: 6,
-      },
-      {
-        id: uuidv4(),
-        type: 'imageGallery',
-        isActive: true,
-        placement: '/',
-        order: 7,
-      },
-      {
-        id: uuidv4(),
-        type: 'quoteBlock',
-        isActive: true,
-        placement: '/',
-        order: 8,
-      },
-      {
-        id: uuidv4(),
-        type: 'featureList',
-        isActive: true,
-        placement: '/',
-        order: 9,
-      },
-      {
-        id: uuidv4(),
-        type: 'divider',
-        isActive: true,
-        placement: '/',
-        order: 10,
-      },
-      {
-        id: uuidv4(),
-        type: 'videoEmbed',
-        isActive: true,
-        placement: '/',
-        order: 11,
-      },
-      {
-        id: uuidv4(),
-        type: 'faqAccordion',
-        isActive: true,
-        placement: '/',
-        order: 12,
-      },
-      {
-        id: uuidv4(),
-        type: 'eventCountdown',
-        isActive: true,
-        placement: '/',
-        order: 13,
-      },
-      {
-        id: uuidv4(),
-        type: 'mapEmbed',
-        isActive: true,
-        placement: '/',
-        order: 14,
-      },
-      {
-        id: uuidv4(),
-        type: 'customHTML',
-        isActive: true,
-        placement: '/',
-        order: 15,
-      },
-      {
-        id: uuidv4(),
-        type: 'carousel',
-        isActive: true,
-        placement: '/',
-        order: 16,
-      },
-      {
-        id: uuidv4(),
-        type: 'collectionShowcase',
-        isActive: true,
-        placement: '/',
-        order: 17,
-      },
-      {
-        id: uuidv4(),
-        type: 'productHighlight',
-        isActive: true,
-        placement: '/',
-        order: 18,
-      },
-      {
-        id: uuidv4(),
-        type: 'socialEmbed',
-        isActive: true,
-        placement: '/',
-        order: 19,
-      },
-    ],
-  },
-];
+const generateSecureId = () => crypto.randomBytes(16).toString('hex');
 
-export default async function seedCMS() {
+const seedCms = async () => {
   try {
-    await connectDB();
-    await CMS.deleteMany();
-    await CMS.insertMany(cmsSeed);
-    console.log('✅ CMS seeded!');
-  } catch (err) {
-    console.error('❌ CMS seeding failed:', err.message);
-  }
-}
+    await Cms.deleteMany();
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  seedCMS();
-}
+    const sections = [
+      {
+        _id: generateSecureId(),
+        type: 'hero',
+        order: 0,
+        route: '/',
+        config: {
+          headline: 'Antonio Pelayo Studio',
+          subtext: 'From Canvas to Cultura',
+          image: '/uploads/hero1.jpg',
+          ctaText: 'Explore the Collection',
+          ctaLink: '/products',
+        },
+      },
+      {
+        _id: generateSecureId(),
+        type: 'promoGrid',
+        order: 1,
+        route: '/',
+        config: {
+          tiles: [
+            {
+              title: 'Fine Art Prints',
+              image: '/uploads/print1.jpg',
+              link: '/products?category=prints',
+            },
+            {
+              title: 'Limited Edition',
+              image: '/uploads/limited.jpg',
+              link: '/products?tag=limited',
+            },
+          ],
+        },
+      },
+      {
+        _id: generateSecureId(),
+        type: 'blogPreview',
+        order: 2,
+        route: '/',
+        config: {
+          headline: 'From the Studio',
+          numPosts: 3,
+        },
+      },
+    ];
+
+    await Cms.insertMany(sections);
+    console.log('CMS data seeded!');
+    process.exit();
+  } catch (error) {
+    console.error('Error seeding CMS data:', error);
+    process.exit(1);
+  }
+};
+
+seedCms();

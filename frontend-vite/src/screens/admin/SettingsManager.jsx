@@ -1,285 +1,150 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import {
   fetchCmsByRoute,
-  updateCms,
+  updateCmsLayout,
   resetCmsStatus,
-  reorderCmsSections,
-} from '@/redux/slices/cmsSlice';
-
-import { DndContext, closestCenter } from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-
-import { v4 as uuidv4 } from 'uuid';
-import toast from 'react-hot-toast';
-
-import SortableItem from '@/components/admin/SortableItem';
-import SectionRow from '@/components/admin/SectionRow';
-import AddEditSectionModal from '@/components/modals/AddEditSectionModal';
-
-// ✅ CMS Section Preview Components
-import HeroSection from '@/components/sections/HeroSection';
-import PromoGridSection from '@/components/sections/PromoGridSection';
-import BlogPreviewSection from '@/components/sections/BlogPreviewSection';
-import TestimonialSection from '@/components/sections/TestimonialSection';
-import NewsletterSignupSection from '@/components/sections/NewsletterSignupSection';
-import CtaBannerSection from '@/components/sections/CtaBannerSection';
-import ImageGallerySection from '@/components/sections/ImageGallerySection';
-import QuoteBlockSection from '@/components/sections/QuoteBlockSection';
-import FeatureListSection from '@/components/sections/FeatureListSection';
-import DividerSection from '@/components/sections/DividerSection';
-import VideoEmbedSection from '@/components/sections/VideoEmbedSection';
-import FaqAccordionSection from '@/components/sections/FaqAccordionSection';
-import EventCountdownSection from '@/components/sections/EventCountdownSection';
-import MapEmbedSection from '@/components/sections/MapEmbedSection';
-import CustomHtmlSection from '@/components/sections/CustomHtmlSection';
-import CarouselSection from '@/components/sections/CarouselSection';
-import CollectionShowcaseSection from '@/components/sections/CollectionShowcaseSection';
-import ProductHighlightSection from '@/components/sections/ProductHighlightSection';
-import SocialEmbedSection from '@/components/sections/SocialEmbedSection';
-
-const DEFAULT_SECTION = {
-  enabled: true,
-  order: 0,
-  settings: {},
-};
-
-const sectionTypes = [
-  'hero',
-  'promoGrid',
-  'blogPreview',
-  'testimonial',
-  'newsletterSignup',
-  'ctaBanner',
-  'imageGallery',
-  'quoteBlock',
-  'featureList',
-  'divider',
-  'videoEmbed',
-  'faqAccordion',
-  'eventCountdown',
-  'mapEmbed',
-  'customHTML',
-  'carousel',
-  'collectionShowcase',
-  'productHighlight',
-  'socialEmbed',
-];
-
-const sectionPreviews = {
-  hero: HeroSection,
-  promoGrid: PromoGridSection,
-  blogPreview: BlogPreviewSection,
-  testimonial: TestimonialSection,
-  newsletterSignup: NewsletterSignupSection,
-  ctaBanner: CtaBannerSection,
-  imageGallery: ImageGallerySection,
-  quoteBlock: QuoteBlockSection,
-  featureList: FeatureListSection,
-  divider: DividerSection,
-  videoEmbed: VideoEmbedSection,
-  faqAccordion: FaqAccordionSection,
-  eventCountdown: EventCountdownSection,
-  mapEmbed: MapEmbedSection,
-  customHTML: CustomHtmlSection,
-  carousel: CarouselSection,
-  collectionShowcase: CollectionShowcaseSection,
-  productHighlight: ProductHighlightSection,
-  socialEmbed: SocialEmbedSection,
-};
+} from '../../redux/slices/cmsSlice';
+import { toast } from 'react-hot-toast';
+import SectionRow from '../../components/admin/SectionRow';
+import AddEditSectionModal from '../../components/modals/AddEditSectionModal';
+import { generateSecureId } from '../../utils/generateSecureId';
 
 const SettingsManager = () => {
   const dispatch = useDispatch();
-  const {
-    sections = [],
-    status,
-    loading,
-    error,
-  } = useSelector((state) => state.cms);
+  const { pathname: route } = useLocation();
+  const { sections, loading, success, error } = useSelector(
+    (state) => state.cms
+  );
 
   const [localSections, setLocalSections] = useState([]);
-  const [selectedRoute, setSelectedRoute] = useState('/');
-  const [editingSectionIndex, setEditingSectionIndex] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingSection, setEditingSection] = useState(null);
+  const [selectedType, setSelectedType] = useState('hero');
+
+  // 🔁 Fetch CMS layout on mount and route change
+  useEffect(() => {
+    dispatch(fetchCmsByRoute(route));
+  }, [dispatch, route]);
 
   useEffect(() => {
-    dispatch(fetchCmsByRoute(selectedRoute));
-    return () => dispatch(resetCmsStatus());
-  }, [dispatch, selectedRoute]);
-
-  useEffect(() => {
-    if (sections.length) {
-      const enriched = sections.map((section) => ({
-        id: section._id || uuidv4(),
-        ...section,
-      }));
-      setLocalSections(enriched);
-    }
+    if (sections) setLocalSections(sections);
   }, [sections]);
 
   useEffect(() => {
-    if (status === 'succeeded') {
-      toast.success('✔ CMS layout saved successfully!');
-    } else if (status === 'failed') {
-      toast.error(`❌ Error saving layout: ${error}`);
+    if (success) {
+      toast.success('Layout saved successfully');
+      dispatch(resetCmsStatus());
     }
-  }, [status, error]);
+    if (error) {
+      toast.error('Error saving layout');
+      dispatch(resetCmsStatus());
+    }
+  }, [success, error, dispatch]);
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = localSections.findIndex((s) => s.id === active.id);
-    const newIndex = localSections.findIndex((s) => s.id === over.id);
-
-    const reordered = arrayMove(localSections, oldIndex, newIndex).map(
-      (s, i) => ({
-        ...s,
-        order: i,
-      })
-    );
-
-    setLocalSections(reordered);
-    dispatch(reorderCmsSections(reordered));
+  const handleSave = () => {
+    dispatch(updateCmsLayout({ route, sections: localSections }));
   };
 
-  const handleManualReorder = (from, to) => {
-    if (to < 0 || to >= localSections.length) return;
-    const reordered = arrayMove(localSections, from, to).map((s, i) => ({
-      ...s,
-      order: i,
-    }));
-    setLocalSections(reordered);
-    dispatch(reorderCmsSections(reordered));
+  const handleEditSection = (section) => {
+    setEditingSection(section);
+    setModalOpen(true);
   };
 
-  const handleAddSection = (type) => {
-    const newSection = {
-      ...DEFAULT_SECTION,
-      id: uuidv4(),
-      type,
-      order: localSections.length,
-    };
-    setLocalSections((prev) => [...prev, newSection]);
+  const handleDeleteSection = (id) => {
+    setLocalSections((prev) => prev.filter((s) => s.id !== id));
+    toast.success('Section deleted');
   };
 
-  const handleFieldChange = (idx, field, value) => {
-    const updated = [...localSections];
-    updated[idx] = { ...updated[idx], [field]: value };
+  const handleReorder = (updated) => {
     setLocalSections(updated);
   };
 
-  const handleSettingsSave = (newSettings) => {
-    if (editingSectionIndex !== null) {
-      const updated = [...localSections];
-      updated[editingSectionIndex] = {
-        ...updated[editingSectionIndex],
-        settings: newSettings,
-      };
-      setLocalSections(updated);
-      setEditingSectionIndex(null);
-    }
-  };
-
-  const handleDeleteSection = (idx) => {
-    const updated = localSections.filter((_, i) => i !== idx);
-    setLocalSections(updated.map((s, i) => ({ ...s, order: i })));
-  };
-
-  const handleSave = () => {
-    dispatch(updateCms({ route: selectedRoute, sections: localSections }));
-  };
-
-  const renderPreview = (section) => {
-    const PreviewComponent = sectionPreviews[section.type];
-    if (PreviewComponent) {
-      return (
-        <div className="border border-dashed border-neutral-300 dark:border-neutral-600 rounded p-2 mt-2 bg-white dark:bg-slate-900">
-          <PreviewComponent {...section} />
-        </div>
-      );
-    }
-    return (
-      <div className="mt-1 text-xs italic text-neutral-400">
-        🧩 Preview not available for <strong>{section.type}</strong>
-      </div>
+  const handleModalSave = (updatedSection) => {
+    setLocalSections((prev) =>
+      prev.map((s) => (s.id === updatedSection.id ? updatedSection : s))
     );
+    setModalOpen(false);
+  };
+
+  const handleModalAdd = (type) => {
+    const newSection = {
+      id: generateSecureId(),
+      type,
+      config: {},
+    };
+    setLocalSections((prev) => [...prev, newSection]);
+    setModalOpen(false);
+  };
+
+  const handleAddSection = () => {
+    handleModalAdd(selectedType);
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">CMS Layout Editor</h1>
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      <h2 className="text-2xl font-semibold mb-4">🔧 Layout Settings</h2>
 
-      {loading && (
-        <div className="text-sm text-yellow-600">Loading layout...</div>
-      )}
+      {loading && <p className="text-sm text-gray-500">Loading layout...</p>}
 
-      <div className="mb-4 flex items-center gap-2">
-        <label className="text-sm">Route:</label>
-        <input
-          value={selectedRoute}
-          onChange={(e) => setSelectedRoute(e.target.value)}
-          className="px-2 py-1 border rounded bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700"
-        />
-        <button
-          onClick={() => dispatch(fetchCmsByRoute(selectedRoute))}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
-        >
-          Load
-        </button>
-      </div>
-
-      <div className="flex gap-2 flex-wrap mb-4">
-        {sectionTypes.map((type) => (
-          <button
-            key={type}
-            onClick={() => handleAddSection(type)}
-            className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs capitalize"
-          >
-            + {type}
-          </button>
+      <div className="space-y-2">
+        {localSections.map((section, index) => (
+          <SectionRow
+            key={section.id}
+            section={section}
+            index={index}
+            onDelete={handleDeleteSection}
+            onEdit={handleEditSection}
+            onReorder={handleReorder}
+            allSections={localSections}
+            setAllSections={setLocalSections}
+          />
         ))}
       </div>
 
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext
-          items={localSections.map((s) => s.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {localSections.map((section, idx) => (
-            <SortableItem key={section.id} id={section.id}>
-              <SectionRow
-                index={idx}
-                section={section}
-                onFieldChange={handleFieldChange}
-                onReorder={handleManualReorder}
-                onDeleteSection={handleDeleteSection}
-                onEditSettings={() => setEditingSectionIndex(idx)}
-              />
-              {renderPreview(section)}
-            </SortableItem>
-          ))}
-        </SortableContext>
-      </DndContext>
-
-      <div className="mt-6">
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
         <button
           onClick={handleSave}
-          className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
         >
-          Save Changes
+          💾 Save Layout
         </button>
+
+        <div className="flex items-center space-x-2">
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="border px-3 py-2 rounded text-sm"
+          >
+            <option value="hero">Hero</option>
+            <option value="promoGrid">Promo Grid</option>
+            <option value="blogPreview">Blog Preview</option>
+            <option value="testimonial">Testimonial</option>
+            <option value="ctaBanner">CTA Banner</option>
+            <option value="imageGallery">Image Gallery</option>
+            <option value="faqAccordion">FAQ Accordion</option>
+            <option value="divider">Divider</option>
+            {/* Extend with more CMS section types */}
+          </select>
+
+          <button
+            onClick={handleAddSection}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+          >
+            ➕ Add Section
+          </button>
+        </div>
       </div>
 
-      <AddEditSectionModal
-        isOpen={editingSectionIndex !== null}
-        onClose={() => setEditingSectionIndex(null)}
-        section={localSections[editingSectionIndex] || {}}
-        onSave={handleSettingsSave}
-      />
+      {modalOpen && (
+        <AddEditSectionModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSave={editingSection ? handleModalSave : handleModalAdd}
+          existingSection={editingSection}
+        />
+      )}
     </div>
   );
 };

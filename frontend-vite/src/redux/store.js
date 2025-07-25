@@ -10,6 +10,7 @@ import badgeReducer from './slices/badgeSlice';
 import heroReducer from './slices/heroSlice';
 import cmsReducer from './slices/cmsSlice';
 import footerReducer from './slices/footerSlice'; // ✅ Footer CMS slice
+import usersReducer from './slices/userSlice'; // ✅ New user slice for admin tools
 
 const store = configureStore({
   reducer: {
@@ -23,6 +24,7 @@ const store = configureStore({
     hero: heroReducer, // Homepage hero CMS section
     cms: cmsReducer, // CMS layout config by route
     footer: footerReducer, // Footer CMS section data
+    users: usersReducer, // ✅ Admin user approval tools
   },
 });
 

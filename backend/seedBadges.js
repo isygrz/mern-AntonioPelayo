@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
+dotenv.config({ quiet: true });
 import connectDB from './db.js';
 import Badge from './models/Badge.js';
-
-dotenv.config();
 
 const badges = [
   {

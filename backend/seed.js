@@ -9,7 +9,7 @@ import seedBlogs from './seedBlogs.js';
 import seedFooter from './seedFooter.js';
 import seedCMS from './seedCms.js';
 
-dotenv.config();
+dotenv.config({ override: true });
 await connectDB();
 
 const flags = new Set(process.argv.slice(2));

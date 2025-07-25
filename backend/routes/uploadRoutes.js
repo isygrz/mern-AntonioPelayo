@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import verifyMobileSessionMiddleware from '../middleware/verifyMobileSessionMiddleware.js';
 
 const router = express.Router();
 
@@ -15,6 +16,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Protected mobile upload route
+router.post(
+  '/mobile',
+  verifyMobileSessionMiddleware,
+  upload.single('image'),
+  (req, res) => {
+    res.status(200).json({ imageUrl: `/uploads/${req.file.filename}` });
+  }
+);
+
+// Fallback/default upload route (assumed admin)
 router.post('/', upload.single('image'), (req, res) => {
   res.status(200).json({ imageUrl: `/uploads/${req.file.filename}` });
 });
