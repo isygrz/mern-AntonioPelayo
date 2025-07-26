@@ -77,7 +77,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     companyName,
     tradeProfession,
     password: hashedPassword,
-    approved: accountType === 'personal', // ✅ Auto-approve personal, require vendor approval
+    approved: accountType === 'personal', // Auto-approve personal, require vendor approval
   });
 
   generateToken(res, user._id);
@@ -94,34 +94,30 @@ export const registerUser = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ New: Check if email is already registered
-// @route   POST /api/users/check-email
+// ✅ Refactored: Check if email exists
+// @route   GET /api/users/check-email
 // @access  Public
-export const checkEmailExists = asyncHandler(async (req, res) => {
-  const { email } = req.body;
+export const checkEmail = asyncHandler(async (req, res) => {
+  const { email } = req.query;
 
   if (!email) {
     res.status(400);
     throw new Error('Email is required');
   }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: email.toLowerCase() });
 
-  if (user) {
-    res.json({
-      exists: true,
-      accountType: user.accountType,
-      isApproved: user.approved || false,
-    });
-  } else {
-    res.json({ exists: false });
-  }
+  res.json({
+    exists: !!user,
+    accountType: user?.accountType || null,
+    isApproved: user?.approved || false,
+  });
 });
 
 // @desc    Logout user / clear cookie
 // @route   POST /api/users/logout
 // @access  Public
-export const logoutUser = asyncHandler(async (req, res) => {
+export const logoutUser = asyncHandler((req, res) => {
   res.cookie('jwt', '', {
     httpOnly: true,
     expires: new Date(0),

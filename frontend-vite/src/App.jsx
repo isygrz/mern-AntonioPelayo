@@ -11,7 +11,7 @@ import BlogListScreen from './screens/BlogListScreen.jsx';
 import BlogPostScreen from './screens/BlogPostScreen.jsx';
 
 // Auth
-import EmailCheckScreen from './screens/EmailCheckScreen.jsx';
+import EmailCheckScreen from './screens/auth/EmailCheckScreen.jsx';
 import AccountTypeSelection from './screens/AccountTypeSelection.jsx';
 import SignInScreen from './screens/SignInScreen.jsx';
 import RegisterScreen from './screens/RegisterScreen.jsx';

@@ -14,7 +14,7 @@ import seedBlogData from '../seedBlogs.js';
 import seedBadgeData from '../seedBadges.js';
 import seedHeroData from '../seedHeroes.js';
 import seedOrderData from '../seedOrders.js';
-import seedCmsData from '../seedCms.js';
+import { seedCmsData } from '../seedCms.js';
 
 const router = express.Router();
 

@@ -1,24 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { register } from '../redux/slices/authSlice';
+import { registerUser } from '@/redux/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const VendorRegisterScreen = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { selectedRole, loading, error, isAuthenticated } = useSelector(
+    (state) => state.auth
+  );
+
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
-    businessName: '',
-    website: '',
+    confirmPassword: '',
   });
 
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { userInfo, error } = useSelector((state) => state.auth);
+  useEffect(() => {
+    if (!selectedRole) {
+      navigate('/register/account-type');
+    }
+  }, [selectedRole, navigate]);
 
   useEffect(() => {
-    if (userInfo) navigate('/');
-  }, [userInfo, navigate]);
+    if (isAuthenticated) {
+      navigate('/account');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -26,54 +37,64 @@ const VendorRegisterScreen = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(register({ ...form, accountType: 'vendor' }));
+
+    if (form.password !== form.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    dispatch(registerUser({ ...form, role: selectedRole }));
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10">
-      <h2 className="text-2xl font-bold mb-4">Vendor Registration</h2>
+    <div className="max-w-md mx-auto p-6 mt-12 bg-white shadow rounded">
+      <h2 className="text-2xl font-bold mb-4">Vendor Sign Up</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
-          name="businessName"
-          value={form.businessName}
-          onChange={handleChange}
-          placeholder="Business Name"
-          className="input"
-        />
-        <input
-          name="website"
-          value={form.website}
-          onChange={handleChange}
-          placeholder="Website URL"
-          className="input"
-        />
-        <input
           name="name"
+          type="text"
+          placeholder="Your Name"
           value={form.name}
           onChange={handleChange}
-          placeholder="Your Full Name"
-          className="input"
+          className="w-full p-2 border rounded"
+          required
         />
         <input
           name="email"
+          type="email"
+          placeholder="you@example.com"
           value={form.email}
           onChange={handleChange}
-          placeholder="Email"
-          className="input"
+          className="w-full p-2 border rounded"
+          required
         />
         <input
           name="password"
           type="password"
+          placeholder="Password"
           value={form.password}
           onChange={handleChange}
-          placeholder="Password"
-          className="input"
+          className="w-full p-2 border rounded"
+          required
         />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button type="submit" className="btn-primary w-full">
-          Submit for Approval
+        <input
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirm Password"
+          value={form.confirmPassword}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+          required
+        />
+        <button
+          type="submit"
+          className="bg-black text-white py-2 w-full rounded hover:bg-gray-800"
+          disabled={loading}
+        >
+          {loading ? 'Creating account...' : 'Register as Vendor'}
         </button>
       </form>
+      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
     </div>
   );
 };

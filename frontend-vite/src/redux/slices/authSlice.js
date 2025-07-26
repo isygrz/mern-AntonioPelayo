@@ -48,7 +48,6 @@ export const hydrateUser = createAsyncThunk(
   }
 );
 
-// ✅ SLICE
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -56,15 +55,16 @@ const authSlice = createSlice({
     loading: false,
     error: null,
     isAuthenticated: false,
+    selectedRole: null, // ✅ NEW: role choice from accountTypeSelector
   },
   reducers: {
     logout: (state) => {
       state.userInfo = null;
       state.isAuthenticated = false;
       state.error = null;
+      state.selectedRole = null; // ✅ Clear selectedRole too
       localStorage.removeItem('auth');
     },
-    // ✅ Guest session setter
     setGuest: (state, action) => {
       state.userInfo = {
         isGuest: true,
@@ -73,6 +73,9 @@ const authSlice = createSlice({
       };
       state.isAuthenticated = false;
       state.error = null;
+    },
+    setSelectedRole: (state, action) => {
+      state.selectedRole = action.payload; // ✅ Store role
     },
   },
   extraReducers: (builder) => {
@@ -114,5 +117,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, setGuest } = authSlice.actions;
+export const { logout, setGuest, setSelectedRole } = authSlice.actions;
 export default authSlice.reducer;

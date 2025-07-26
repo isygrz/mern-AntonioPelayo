@@ -81,4 +81,8 @@ const userSlice = createSlice({
 });
 
 export const { resetApproveSuccess } = userSlice.actions;
+
+// ✅ Added selector to fix UserApprovalManager import
+export const getAllUsers = (state) => state.users.users;
+
 export default userSlice.reducer;

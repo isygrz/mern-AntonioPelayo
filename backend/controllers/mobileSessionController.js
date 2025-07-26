@@ -24,3 +24,20 @@ export const createMobileSession = asyncHandler(async (req, res) => {
 
   res.status(201).json({ token, expiresAt });
 });
+
+// ✅ GET /api/mobile-sessions/:token
+export const getMobileSession = asyncHandler(async (req, res) => {
+  const session = await MobileSession.findOne({ token: req.params.token });
+
+  if (!session) {
+    res.status(404);
+    throw new Error('Mobile session not found');
+  }
+
+  if (session.expiresAt < new Date()) {
+    res.status(410);
+    throw new Error('Mobile session expired');
+  }
+
+  res.json(session);
+});

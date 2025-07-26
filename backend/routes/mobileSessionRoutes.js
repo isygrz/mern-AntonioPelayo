@@ -1,7 +1,7 @@
 import express from 'express';
 import {
   createMobileSession,
-  getMobileSession,
+  getMobileSession, // ✅ make sure this is actually exported
 } from '../controllers/mobileSessionController.js';
 
 const router = express.Router();

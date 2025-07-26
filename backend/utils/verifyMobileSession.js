@@ -1,4 +1,4 @@
-import MobileSession from '../models/mobileSessionModel.js';
+import MobileSession from '../models/MobileSession.js';
 
 export const verifyMobileSession = async (token) => {
   if (!token || typeof token !== 'string' || token.length !== 32) {

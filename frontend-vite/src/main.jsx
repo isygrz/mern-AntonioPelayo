@@ -8,7 +8,7 @@ import './index.css';
 
 // ✅ Import thunks for DevTools or optional DebugPanel
 import { fetchAllProducts } from './redux/slices/productSlice.js';
-import { fetchAllBlogs } from './redux/slices/blogSlice.js';
+import { fetchBlogs } from './redux/slices/blogSlice.js'; // 🔁 FIXED: Correct name
 import { updateCmsLayout } from './redux/slices/cmsSlice.js';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -27,7 +27,7 @@ root.render(
 if (import.meta.env.MODE === 'development' && typeof window !== 'undefined') {
   window.store = store;
   window.fetchAllProducts = fetchAllProducts;
-  window.fetchAllBlogs = fetchAllBlogs;
+  window.fetchBlogs = fetchBlogs; // 🔁 FIXED
   window.updateCmsLayout = updateCmsLayout;
 
   console.log('🧪 Redux store and thunks exposed on window');

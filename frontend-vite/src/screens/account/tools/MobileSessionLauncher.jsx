@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import QRCode from 'qrcode.react';
-import { generateSecureId } from '../../utils/generateSecureId';
+import QRCode from 'react-qr-code';
+import { generateSecureId } from '@/utils/generateSecureId';
 
 const MobileSessionLauncher = () => {
   const [sessionToken, setSessionToken] = useState(null);
@@ -41,14 +41,13 @@ const MobileSessionLauncher = () => {
             Scan this QR code with your phone to open the mobile inventory tool.
           </p>
 
-          <QRCode
-            value={`https://yourdomain.com/mobile-session/${sessionToken}`}
-            size={200}
-            bgColor="#ffffff"
-            fgColor="#000000"
-            level="H"
-            includeMargin
-          />
+          <div className="bg-white p-2 inline-block rounded">
+            <QRCode
+              value={`https://yourdomain.com/mobile-session/${sessionToken}`}
+              size={200}
+              style={{ height: 'auto', maxWidth: '100%', width: '200px' }}
+            />
+          </div>
 
           <p className="text-sm text-gray-500">
             ⏳ Expires: {new Date(expiresAt).toLocaleTimeString()}{' '}

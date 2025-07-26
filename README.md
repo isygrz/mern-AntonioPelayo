@@ -1230,3 +1230,94 @@
 → Confirmed secure Node crypto usage for backend session generation
 → Removed unused frontend uuid dependency and pruned node_modules
 → Added toast-based feedback UX for CMS layout actions via Redux state management
+
+100. Smart Auth Flow: EmailCheckScreen Implementation
+
+- Introduced new screen: EmailCheckScreen.jsx
+  → Collects user email and POSTs to /api/users/check-email
+- Backend logic: userController.js
+  → New controller: checkEmailStatus
+  → New route: POST /api/users/check-email in userRoutes.js
+- Outcome:
+  → Determines if user should proceed to login or registration
+  → Pre-fills email field in redirected screens via query param
+
+101. Backend: /check-email Endpoint
+
+- Created checkEmailStatus controller:
+  → Searches user DB for submitted email
+  → Returns JSON with { exists, role, isApproved }
+- Added route in userRoutes.js:
+  → POST /api/users/check-email
+  → Validates input with express-validator and returns 400 on bad payload
+  → Used for conditional routing in EmailCheckScreen.jsx
+
+102. Created AccountTypeSelection.jsx
+
+- Role Selection:
+  → Two buttons: "Continue as Personal" or "Continue as Vendor"
+  → Stores selected role in Redux: authSlice.selectedRole
+  → Redirects user to appropriate register route
+- Design:
+  → Clean UX with icons and layout polish
+  → Uses useNavigate, useDispatch, and react-hot-toast
+
+103. Redux Enhancements for Role Selection
+
+- Updated authSlice.js:
+  → Added selectedRole to state
+  → Created reducer: setSelectedRole(role)
+- Used in:
+  → AccountTypeSelection.jsx to set selectedRole
+  → Register screens to validate role before proceeding
+
+104. Added Role-Based Redirect in Register Screens
+
+- Updated both:
+  → VendorRegisterScreen.jsx
+  → PersonalRegisterScreen.jsx
+- New logic:
+  → If auth.selectedRole is not set, redirect to /register/account-type
+  → Prevents bypassing role selection via direct URL
+- Maintains consistent onboarding flow
+
+105. Refactored MobileSessionLauncher.jsx with react-qr-code
+
+- Removed qrcode.react dependency:
+  → Caused ESM import issues with Vite
+- Replaced with react-qr-code@2.0.7
+  → Full ESM-compatible
+  → Clean rendering, responsive sizing
+- Updated import: import QRCode from 'react-qr-code';
+
+106. Confirmed Secure Token Workflow with generateSecureId
+
+- Utility generateSecureId.js:
+  → Uses crypto.getRandomValues to generate 128-bit token
+- Used in MobileSessionLauncher.jsx to launch mobile session
+- Ensures frontend token generation matches backend expectations
+
+107. Backend Fixes and Cleanup for ESM Exports
+
+- Fixed named export errors:
+  → getProducts in productController.js
+  → seedCmsData in seedCms.js
+  → getMobileSession in mobileSessionController.js
+- Ensured:
+  → Named exports match route imports
+  → All controllers use export const instead of module.exports
+- Prevented common ERR_MODULE_NOT_FOUND and SyntaxError: named export issues
+
+108. Scaffolded LoginScreen.jsx
+
+- New file LoginScreen.jsx:
+  → Email and password fields
+  → Pre-fills email from /login?email=...
+  → Uses Redux action: loginUser({ email, password })
+  → Redirects to /account if already logged in
+- Fully styled and ready for integration
+
+109. Folder Restructuring and Consolidation
+
+- Moved EmailCheckScreen.jsx to:
+  → src/screens/auth/EmailCheckScreen.jsx
