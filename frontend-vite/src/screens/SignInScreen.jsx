@@ -1,62 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../redux/slices/authSlice';
-import Loader from '../components/Loader';
-import Message from '../components/Message';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const SignInScreen = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const { userInfo, loading, error } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    if (userInfo) {
-      if (!userInfo.approved) {
-        navigate('/approval-pending');
-      } else if (userInfo.accountType === 'vendor') {
-        navigate('/vendor-dashboard');
-      } else {
-        navigate('/my-account');
-      }
-    }
-  }, [userInfo, navigate]);
-
-  const submitHandler = (e) => {
-    e.preventDefault();
-    dispatch(loginUser({ email, password }));
-  };
-
   return (
-    <div className="max-w-md mx-auto mt-10">
-      <h1 className="text-2xl font-bold mb-6">Sign In</h1>
-      {error && <Message variant="danger">{error}</Message>}
-      {loading && <Loader />}
-      <form onSubmit={submitHandler} className="space-y-4">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          required
-          onChange={(e) => setEmail(e.target.value)}
-          className="input input-bordered w-full"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          required
-          onChange={(e) => setPassword(e.target.value)}
-          className="input input-bordered w-full"
-        />
-        <button type="submit" className="btn btn-primary w-full">
-          Sign In
-        </button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+      <div className="max-w-md w-full space-y-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-800">Deprecated Screen</h2>
+        <p className="text-sm text-gray-500">
+          Please use the new{' '}
+          <Link to="/check-email" className="text-blue-600 hover:underline">
+            Email Check Flow
+          </Link>
+          .
+        </p>
+      </div>
     </div>
   );
 };

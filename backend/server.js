@@ -18,7 +18,9 @@ import heroRoutes from './routes/heroRoutes.js';
 import cmsRoutes from './routes/cmsRoutes.js';
 
 // 🧰 Utility Routes
-import mobileSessionRoutes from './routes/mobileSessionRoutes.js'; // ✅ ADDED
+import mobileSessionRoutes from './routes/mobileSessionRoutes.js';
+import inboxRoutes from './routes/inboxRoutes.js';
+import vendorProfileRoutes from './routes/vendorProfileRoutes.js';
 
 // 🧱 Middleware
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -37,7 +39,7 @@ app.use(express.json());
 app.use('/api/products', productRoutes);
 app.use('/api/seed', seedRoutes);
 app.use('/api/uploads', uploadRoutes);
-app.use('/api/mobile-sessions', mobileSessionRoutes); // ✅ ADDED
+app.use('/api/mobile-sessions', mobileSessionRoutes);
 
 // 📚 CMS Endpoints
 app.use('/api/blogs', blogRoutes);
@@ -45,7 +47,11 @@ app.use('/api/badges', badgeRoutes);
 app.use('/api/heroes', heroRoutes);
 app.use('/api/cms', cmsRoutes);
 
-// 📁 Serve static assets
+// 💬 Vendor & Messaging Endpoints
+app.use('/api/inbox', inboxRoutes);
+app.use('/api/vendor-profile', vendorProfileRoutes);
+
+// 📁 Static Files
 const __dirname = path.resolve();
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 

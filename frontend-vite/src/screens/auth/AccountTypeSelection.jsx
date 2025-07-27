@@ -1,19 +1,30 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setSelectedRole } from '@/redux/slices/authSlice'; // Make sure this is in your slice
-import { Button } from '@/components/ui/button'; // Or use plain button
+import { setSelectedRole } from '@/redux/slices/authSlice';
+import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
 
 const AccountTypeSelection = () => {
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const email = searchParams.get('email');
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleRoleSelect = (role) => {
+    if (!email) {
+      toast.error('Email missing from URL. Please start over.');
+      navigate('/start');
+      return;
+    }
+
     dispatch(setSelectedRole(role));
+
+    const encodedEmail = encodeURIComponent(email);
     if (role === 'personal') {
-      navigate('/register/personal');
+      navigate(`/register/personal?email=${encodedEmail}`);
     } else if (role === 'vendor') {
-      navigate('/register/vendor');
+      navigate(`/register/vendor?email=${encodedEmail}`);
     }
   };
 
@@ -22,10 +33,10 @@ const AccountTypeSelection = () => {
       <h1 className="text-3xl font-bold mb-6">Choose Your Account Type</h1>
       <div className="space-y-4 w-full max-w-xs">
         <Button className="w-full" onClick={() => handleRoleSelect('personal')}>
-          Personal Account
+          👤 Personal Account
         </Button>
         <Button className="w-full" onClick={() => handleRoleSelect('vendor')}>
-          Vendor Account
+          🏪 Vendor Account
         </Button>
       </div>
     </div>

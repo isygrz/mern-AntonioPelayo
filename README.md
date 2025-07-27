@@ -1181,11 +1181,11 @@
 96. Middleware Injection into Route Files
 
 - Injected verifyMobileSessionMiddleware into key backend route files:
-  → mobileSessionRoutes.js (entire route)
-  → orderRoutes.js (mobile route group only)
-  → productRoutes.js (for mobile session inventory ops)
-  → uploadRoutes.js (potential future image logging or QR scans)
-  → userRoutes.js (for mobile session profile handling)
+  → `mobileSessionRoutes.js` (entire route)
+  → `orderRoutes.js` (mobile route group only)
+  → `productRoutes.js` (for mobile session inventory ops)
+  → `uploadRoutes.js` (potential future image logging or QR scans)
+  → `userRoutes.js` (for mobile session profile handling)
 - Ensures all mobile-authenticated operations validate tokens securely
 - Outcome:
   → Mobile workflows now supported in backend APIs
@@ -1207,9 +1207,9 @@
   → 32-character secure token: consistent with backend format
 - Safe for all modern browsers — no polyfill or UUID needed
 - Used in:
-  → SettingsManager.jsx
-  → MobileSessionLauncher.jsx
-  → guestSession.js
+  → `SettingsManager.jsx`
+  → `MobileSessionLauncher.jsx`
+  → `guestSession.js`
 
 99. Removed Legacy uuid Dependency from Frontend
 
@@ -1233,9 +1233,9 @@
 
 100. Smart Auth Flow: EmailCheckScreen Implementation
 
-- Introduced new screen: EmailCheckScreen.jsx
+- Introduced new screen: `EmailCheckScreen.jsx`
   → Collects user email and POSTs to /api/users/check-email
-- Backend logic: userController.js
+- Backend logic: `userController.js`
   → New controller: checkEmailStatus
   → New route: POST /api/users/check-email in userRoutes.js
 - Outcome:
@@ -1247,12 +1247,12 @@
 - Created checkEmailStatus controller:
   → Searches user DB for submitted email
   → Returns JSON with { exists, role, isApproved }
-- Added route in userRoutes.js:
+- Added route in `userRoutes.js`:
   → POST /api/users/check-email
   → Validates input with express-validator and returns 400 on bad payload
-  → Used for conditional routing in EmailCheckScreen.jsx
+  → Used for conditional routing in `EmailCheckScreen.jsx`
 
-102. Created AccountTypeSelection.jsx
+102. Created `AccountTypeSelection.jsx`
 
 - Role Selection:
   → Two buttons: "Continue as Personal" or "Continue as Vendor"
@@ -1268,14 +1268,14 @@
   → Added selectedRole to state
   → Created reducer: setSelectedRole(role)
 - Used in:
-  → AccountTypeSelection.jsx to set selectedRole
+  → `AccountTypeSelection.jsx` to set selectedRole
   → Register screens to validate role before proceeding
 
 104. Added Role-Based Redirect in Register Screens
 
 - Updated both:
-  → VendorRegisterScreen.jsx
-  → PersonalRegisterScreen.jsx
+  → `VendorRegisterScreen.jsx`
+  → `PersonalRegisterScreen.jsx`
 - New logic:
   → If auth.selectedRole is not set, redirect to /register/account-type
   → Prevents bypassing role selection via direct URL
@@ -1292,7 +1292,7 @@
 
 106. Confirmed Secure Token Workflow with generateSecureId
 
-- Utility generateSecureId.js:
+- Utility `generateSecureId.js`:
   → Uses crypto.getRandomValues to generate 128-bit token
 - Used in MobileSessionLauncher.jsx to launch mobile session
 - Ensures frontend token generation matches backend expectations
@@ -1300,9 +1300,9 @@
 107. Backend Fixes and Cleanup for ESM Exports
 
 - Fixed named export errors:
-  → getProducts in productController.js
-  → seedCmsData in seedCms.js
-  → getMobileSession in mobileSessionController.js
+  → getProducts in `productController.js`
+  → seedCmsData in `seedCms.js`
+  → getMobileSession in `mobileSessionController.js`
 - Ensured:
   → Named exports match route imports
   → All controllers use export const instead of module.exports
@@ -1319,5 +1319,45 @@
 
 109. Folder Restructuring and Consolidation
 
-- Moved EmailCheckScreen.jsx to:
+- Moved `EmailCheckScreen.jsx` to:
   → src/screens/auth/EmailCheckScreen.jsx
+
+110. Smart Auth Flow Migration (EmailCheck UX)
+
+- Fully replaced legacy sign-in UX (/signin) with /check-email screen
+- Introduced EmailCheckScreen.jsx:
+  → Collects email and checks existence/status via POST /api/users/check-email
+  → Redirects to sign-in or registration screen based on user state
+- Updated `Header.jsx`:
+  → “Sign In” button now routes to /check-email
+- Deprecated `SignInScreen.jsx`:
+  → Still exists as a soft fallback, but logic fully migrated
+- Replaced manual axios.post logic with new Redux thunk: checkEmailStatus
+- Updated `authSlice.js` to include:
+  → checkEmailStatus thunk
+  → Role-based state routing metadata: selectedRole, isApproved, etc.
+
+111. Redux Store Integration for EmailCheck Flow
+
+- Confirmed Redux setup for checkEmailStatus:
+  → `store.js` includes authSlice from redux/slices/authSlice.js
+  → `main.jsx` correctly provides <Provider store={store}>
+- Fully removed unused loginUser thunk:
+  → Purged from `authSlice.js`, `main.jsx`, and legacy screen `LoginScreen.jsx`
+  → Cleaned `userRoutes.js` of any outdated references
+- Resolved ESLint warnings for unused toast, checkStatus, error, role, and isApproved
+
+112. White Screen Prevention + Fallback Strategy
+
+- Prevented white screen errors during lazy loading or failed Suspense boundaries
+- In `main.jsx`:
+  → Wrapped <App /> in <Suspense fallback={<div>Loading...</div>}>
+  → Fallback message may be upgraded to branded loader later
+- Optional: consider React Error Boundaries (componentDidCatch) for uncaught runtime errors
+
+113. 🪦 Legacy Route Deprecation
+
+- Deprecated and removed /login route:
+  → Fully migrated flow begins at /check-email
+  → Removed import and usage of `LoginScreen.jsx`
+- Removed unused loginUser references across project

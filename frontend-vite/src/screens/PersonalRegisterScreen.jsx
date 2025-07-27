@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '@/redux/slices/authSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const PersonalRegisterScreen = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const { selectedRole, loading, error, isAuthenticated } = useSelector(
     (state) => state.auth
@@ -26,10 +27,24 @@ const PersonalRegisterScreen = () => {
   }, [selectedRole, navigate]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/account');
+    const emailFromUrl = searchParams.get('email');
+    if (emailFromUrl) {
+      setForm((prev) => ({ ...prev, email: emailFromUrl }));
     }
-  }, [isAuthenticated, navigate]);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      toast.success('🎉 Welcome! Your account has been created.');
+
+      // Redirect based on accountType and approval
+      if (selectedRole === 'vendor') {
+        navigate('/not-authorized'); // or /thank-you-awaiting-approval
+      } else {
+        navigate('/my-account/dashboard');
+      }
+    }
+  }, [isAuthenticated, navigate, selectedRole]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });

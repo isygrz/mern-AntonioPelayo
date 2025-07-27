@@ -1,56 +1,57 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../utils/axiosInstance';
+import { useDispatch } from 'react-redux';
+import { checkEmailStatus } from '../../redux/slices/authSlice';
 import toast from 'react-hot-toast';
 
 const EmailCheckScreen = () => {
-  const [email, setEmail] = useState('');
-  const [checking, setChecking] = useState(false);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const [email, setEmail] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email) {
-      toast.error('Please enter your email');
-      return;
-    }
+    if (!email) return toast.error('Please enter an email.');
 
     try {
-      setChecking(true);
-      const { data } = await axios.get(
-        `/api/users/check-email?email=${encodeURIComponent(email)}`
-      );
-      if (data.exists) {
-        navigate(`/signin?email=${encodeURIComponent(email)}`);
+      const resultAction = await dispatch(checkEmailStatus(email));
+
+      if (checkEmailStatus.fulfilled.match(resultAction)) {
+        const { exists } = resultAction.payload;
+
+        if (exists) {
+          navigate(`/signin?email=${encodeURIComponent(email)}`);
+        } else {
+          navigate(
+            `/account-type-selection?email=${encodeURIComponent(email)}`
+          );
+        }
       } else {
-        navigate(`/register/account-type?email=${encodeURIComponent(email)}`);
+        throw new Error('Unexpected response');
       }
     } catch (err) {
       console.error('❌ Email check failed:', err);
       toast.error('Something went wrong. Please try again.');
-    } finally {
-      setChecking(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto mt-10 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Let's Get Started</h2>
+    <div className="max-w-md mx-auto p-4">
+      <h1 className="text-2xl font-semibold mb-4">Sign In or Create Account</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
-          placeholder="you@example.com"
+          placeholder="Enter your email"
           value={email}
-          className="border border-gray-300 p-2 w-full rounded"
+          className="w-full p-2 border rounded"
           onChange={(e) => setEmail(e.target.value)}
-          required
         />
         <button
           type="submit"
-          className="bg-black text-white w-full py-2 rounded hover:bg-gray-800"
-          disabled={checking}
+          className="bg-black text-white w-full p-2 rounded"
         >
-          {checking ? 'Checking...' : 'Continue'}
+          Continue
         </button>
       </form>
     </div>

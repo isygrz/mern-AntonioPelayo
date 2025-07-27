@@ -14,7 +14,7 @@ import usersReducer from './slices/userSlice'; // ✅ New user slice for admin t
 
 const store = configureStore({
   reducer: {
-    auth: authReducer, // User authentication (JWT + guest sessions)
+    auth: authReducer, // User authentication
     products: productReducer, // Full product catalog and CRUD
     productDetails: productDetailsReducer, // ✅ Single product details via slug
     cart: cartReducer, // Guest/user cart state

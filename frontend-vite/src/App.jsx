@@ -18,6 +18,9 @@ import RegisterScreen from './screens/RegisterScreen.jsx';
 import PersonalRegisterScreen from './screens/PersonalRegisterScreen.jsx';
 import VendorRegisterScreen from './screens/VendorRegisterScreen.jsx';
 
+// Post-registration
+import ThankYouAwaitingApproval from './screens/ThankYouAwaitingApproval.jsx';
+
 // Account
 import AccountScreen from './screens/AccountScreen.jsx';
 import NotAuthorizedScreen from './screens/NotAuthorizedScreen.jsx';
@@ -48,10 +51,10 @@ import Footer from './components/Footer.jsx';
 
 function App() {
   return (
-    <div className="container mx-auto px-4">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main>
+      <main className="flex-grow container mx-auto px-4">
         <Routes>
           {/* Public */}
           <Route path="/" element={<HomeScreen />} />
@@ -62,10 +65,6 @@ function App() {
 
           {/* Auth Flow */}
           <Route path="/check-email" element={<EmailCheckScreen />} />
-          <Route
-            path="/select-account-type"
-            element={<AccountTypeSelection />}
-          />
           <Route path="/signin" element={<SignInScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
           <Route
@@ -73,6 +72,16 @@ function App() {
             element={<PersonalRegisterScreen />}
           />
           <Route path="/register/vendor" element={<VendorRegisterScreen />} />
+          <Route
+            path="/register/account-type"
+            element={<AccountTypeSelection />}
+          />
+
+          {/* Post-Registration Vendor Message */}
+          <Route
+            path="/thank-you-awaiting-approval"
+            element={<ThankYouAwaitingApproval />}
+          />
 
           {/* Protected Account Area */}
           <Route

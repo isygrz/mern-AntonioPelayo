@@ -6,10 +6,13 @@ import { BrowserRouter } from 'react-router-dom';
 import store from './redux/store.js';
 import './index.css';
 
-// ✅ Import thunks for DevTools or optional DebugPanel
+// ✅ Optional: Expose for DevTools
 import { fetchAllProducts } from './redux/slices/productSlice.js';
-import { fetchBlogs } from './redux/slices/blogSlice.js'; // 🔁 FIXED: Correct name
+import { fetchBlogs } from './redux/slices/blogSlice.js';
 import { updateCmsLayout } from './redux/slices/cmsSlice.js';
+
+// ✅ Moved to its own file
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -17,18 +20,19 @@ root.render(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </BrowserRouter>
     </Provider>
   </React.StrictMode>
 );
 
-// ✅ DEV ONLY: Expose Redux store and thunks for manual dispatch in browser
+// ✅ DEV ONLY: Expose Redux store and thunks
 if (import.meta.env.MODE === 'development' && typeof window !== 'undefined') {
   window.store = store;
   window.fetchAllProducts = fetchAllProducts;
-  window.fetchBlogs = fetchBlogs; // 🔁 FIXED
+  window.fetchBlogs = fetchBlogs;
   window.updateCmsLayout = updateCmsLayout;
-
   console.log('🧪 Redux store and thunks exposed on window');
 }
