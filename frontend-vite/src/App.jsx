@@ -13,7 +13,7 @@ import BlogPostScreen from './screens/BlogPostScreen.jsx';
 // Auth
 import EmailCheckScreen from './screens/auth/EmailCheckScreen.jsx';
 import AccountTypeSelection from './screens/AccountTypeSelection.jsx';
-import SignInScreen from './screens/SignInScreen.jsx';
+import SignInScreenSmart from './screens/auth/SignInScreenSmart';
 import RegisterScreen from './screens/RegisterScreen.jsx';
 import PersonalRegisterScreen from './screens/PersonalRegisterScreen.jsx';
 import VendorRegisterScreen from './screens/VendorRegisterScreen.jsx';
@@ -24,6 +24,7 @@ import ThankYouAwaitingApproval from './screens/ThankYouAwaitingApproval.jsx';
 // Account
 import AccountScreen from './screens/AccountScreen.jsx';
 import NotAuthorizedScreen from './screens/NotAuthorizedScreen.jsx';
+import VendorProfileForm from './screens/account/VendorProfileForm.jsx';
 
 // Admin
 import AdminLayout from './layouts/AdminLayout.jsx';
@@ -44,6 +45,7 @@ import MobileSessionLauncher from './screens/account/tools/MobileSessionLauncher
 // Route Guards
 import ProtectedRoute from './components/routing/ProtectedRoute.jsx';
 import AdminRoute from './components/routing/AdminRoute.jsx';
+import VendorRoute from './components/routing/VendorRoute.jsx'; // ✅ NEW
 
 // Layout
 import Header from './components/Header.jsx';
@@ -65,7 +67,7 @@ function App() {
 
           {/* Auth Flow */}
           <Route path="/check-email" element={<EmailCheckScreen />} />
-          <Route path="/signin" element={<SignInScreen />} />
+          <Route path="/signin" element={<SignInScreenSmart />} />
           <Route path="/register" element={<RegisterScreen />} />
           <Route
             path="/register/personal"
@@ -117,6 +119,14 @@ function App() {
                 <AdminRoute>
                   <AdminUserApprovalScreen />
                 </AdminRoute>
+              }
+            />
+            <Route
+              path="profile"
+              element={
+                <VendorRoute>
+                  <VendorProfileForm />
+                </VendorRoute>
               }
             />
             <Route path="cms" element={<div>CMS Editor (TODO)</div>} />

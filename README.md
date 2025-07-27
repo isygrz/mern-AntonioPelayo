@@ -1361,3 +1361,53 @@
   → Fully migrated flow begins at /check-email
   → Removed import and usage of `LoginScreen.jsx`
 - Removed unused loginUser references across project
+
+114. Deprecated LoginScreen.jsx
+
+- Deleted `LoginScreen.jsx` since it was a temporary redirect placeholder.
+- All sign-in flows are now handled via `EmailCheckScreen.jsx` → `SignInScreen.jsx` and role-aware registration.
+- Removed `/login` route entirely to reduce confusion
+
+115. Refactored authSlice.js for Consistent Thunk Exports
+
+- Replaced legacy exports like `registerUser`, `login`, and `logout` with standardized Redux Thunks:
+  → `registerUser`
+  → `loginUser`
+  → `logoutUser`
+- Updated action and slice logic to match modern Redux Toolkit structure
+- Ensured compatibility with `EmailCheckScreen`, `PersonalRegisterScreen`, and `SignInScreenSmart`
+- Verified all thunk exports to eliminate missing import errors across screens
+
+116. Replaced SignInScreen.jsx with SignInScreenSmart.jsx
+
+- Created new smart sign-in screen: `SignInScreenSmart.jsx`
+  → Receives `email` via URL query param from `/check-email`
+  → Uses `loginUser` from Redux
+  → Redirects user based on successful login and user role
+  → Displays errors via toast notifications
+- Deleted old `SignInScreen.jsx` file to avoid duplicate routing/conflicts
+
+117. Confirmed Email Check Route / Controller / Proxy Integration
+
+- Verified existence of `/api/users/check-email` backend route in `userRoutes.js`
+- Controller `checkEmailStatus` added to `userController.js`
+  → Returns `{ exists, role, isApproved }` for given email
+- Proxy rule added to `vite.config.js`:
+  → Forwards `/api` to backend server on port 5000
+- Ensured `EmailCheckScreen.jsx` submits to this route for smart flow routing
+
+118. Cleaned Up `undefined` Log and db.js Import Errors
+
+- Fixed improper logging of `undefined` in `server.js` startup logs
+  → Cleaned up accidental `console.log(process.env.MONGODB_URI)` usage
+- Relocated `db.js` from `backend/` to `backend/config/db.js` to resolve import error in ESM context
+- Used `path.resolve()` consistently for ES module compatibility
+- Verified MongoDB connection prints success message without side logs
+
+119. Final Routing & UX Confirmations
+
+- `/check-email` flow works correctly for seeded user: `admin@example.com`
+  → Redirects to `SignInScreenSmart.jsx` with email pre-filled
+- Removed legacy redirect messaging: “Deprecated screen, use Email Check Flow”
+- Confirmed that Redux flow + API integration now functions with no `404` or thunk errors
+- `favicon.ico` 404 ignored (non-critical), and WebSocket devtool messages are browser extension-related

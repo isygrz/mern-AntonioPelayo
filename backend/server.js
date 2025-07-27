@@ -1,65 +1,43 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
+import connectDB from './config/db.js';
 
-// 🔌 DB Connection
-import connectDB from './db.js';
-
-// 🛒 Core Routes
 import productRoutes from './routes/productRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import seedRoutes from './routes/seedRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
-
-// 🧩 CMS Routes
-import blogRoutes from './routes/blogRoutes.js';
-import badgeRoutes from './routes/badgeRoutes.js';
-import heroRoutes from './routes/heroRoutes.js';
-import cmsRoutes from './routes/cmsRoutes.js';
-
-// 🧰 Utility Routes
 import mobileSessionRoutes from './routes/mobileSessionRoutes.js';
-import inboxRoutes from './routes/inboxRoutes.js';
-import vendorProfileRoutes from './routes/vendorProfileRoutes.js';
 
-// 🧱 Middleware
-import { notFound, errorHandler } from './middleware/errorMiddleware.js';
-
+// Load environment variables first
 dotenv.config();
+
+// Connect to MongoDB
 connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// 🧪 Dev Middleware
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// 📦 API Endpoints
+// API Routes
 app.use('/api/products', productRoutes);
 app.use('/api/seed', seedRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/mobile-sessions', mobileSessionRoutes);
+app.use('/api/users', userRoutes);
 
-// 📚 CMS Endpoints
-app.use('/api/blogs', blogRoutes);
-app.use('/api/badges', badgeRoutes);
-app.use('/api/heroes', heroRoutes);
-app.use('/api/cms', cmsRoutes);
+// Serve static files from /uploads
+const __dirnameFull = path.resolve();
+app.use('/uploads', express.static(path.join(__dirnameFull, '/uploads')));
 
-// 💬 Vendor & Messaging Endpoints
-app.use('/api/inbox', inboxRoutes);
-app.use('/api/vendor-profile', vendorProfileRoutes);
-
-// 📁 Static Files
-const __dirname = path.resolve();
-app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
-
-// 🛑 Fallback & Error Handling
-app.use(notFound);
-app.use(errorHandler);
-
-// 🚀 Launch Server
+// Start Server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });

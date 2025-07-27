@@ -13,6 +13,37 @@ export const checkEmailStatus = createAsyncThunk(
   }
 );
 
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async (formData, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.post('/api/users/register', formData);
+      return data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Registration failed'
+      );
+    }
+  }
+);
+
+export const loginUser = createAsyncThunk(
+  'auth/loginUser',
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.post('/api/users/login', credentials);
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Login failed');
+    }
+  }
+);
+
+export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
+  await axios.post('/api/users/logout');
+  return true;
+});
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -21,17 +52,16 @@ const authSlice = createSlice({
     loading: false,
     error: null,
     selectedRole: null,
+    isAuthenticated: false,
   },
   reducers: {
-    logout: (state) => {
-      state.userInfo = null;
-    },
     setSelectedRole: (state, action) => {
       state.selectedRole = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
+      // Check Email
       .addCase(checkEmailStatus.pending, (state) => {
         state.loading = true;
         state.checkStatus = null;
@@ -44,9 +74,45 @@ const authSlice = createSlice({
       .addCase(checkEmailStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      // Register
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userInfo = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Login
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userInfo = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Logout
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.userInfo = null;
+        state.isAuthenticated = false;
       });
   },
 });
 
-export const { logout, setSelectedRole } = authSlice.actions;
+export const { setSelectedRole } = authSlice.actions;
 export default authSlice.reducer;

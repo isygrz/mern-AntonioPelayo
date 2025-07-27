@@ -38,7 +38,9 @@ const EmailCheckScreen = () => {
 
   return (
     <div className="max-w-md mx-auto p-4">
-      <h1 className="text-2xl font-semibold mb-4">Sign In or Create Account</h1>
+      <h1 className="text-2xl font-semibold mb-4">
+        Please enter your email address to Sign In or Register
+      </h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"

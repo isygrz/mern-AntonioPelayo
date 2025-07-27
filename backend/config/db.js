@@ -6,7 +6,12 @@ const connectDB = async () => {
   if (isConnected) return; // Prevent multiple connects
 
   try {
-    console.log('MONGODB_URI:', process.env.MONGODB_URI); // Logged once
+    if (!process.env.MONGODB_URI) {
+      console.error('❌ MONGODB_URI is not defined in environment variables.');
+      process.exit(1);
+    }
+
+    console.log(`🌐 Connecting to MongoDB cluster...`);
     await mongoose.connect(process.env.MONGODB_URI);
     isConnected = true;
     console.log('✅ MongoDB connected');

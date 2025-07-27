@@ -2,7 +2,7 @@ import asyncHandler from 'express-async-handler';
 import VendorProfile from '../models/VendorProfile.js';
 
 // @desc    Create or update vendor profile
-// @route   POST /api/vendor/profile
+// @route   POST /api/vendor-profile/profile
 // @access  Private/Vendor
 const saveVendorProfile = asyncHandler(async (req, res) => {
   const {
@@ -36,20 +36,30 @@ const saveVendorProfile = asyncHandler(async (req, res) => {
   let profile = await VendorProfile.findOne({ user: req.user._id });
 
   if (profile) {
-    // Update existing
     profile = await VendorProfile.findOneAndUpdate(
       { user: req.user._id },
       profileFields,
-      {
-        new: true,
-      }
+      { new: true }
     );
   } else {
-    // Create new
     profile = await VendorProfile.create(profileFields);
   }
 
   res.status(200).json(profile);
 });
 
-export { saveVendorProfile };
+// @desc    Get logged-in vendor's profile
+// @route   GET /api/vendor-profile/profile
+// @access  Private/Vendor
+const getVendorProfile = asyncHandler(async (req, res) => {
+  const profile = await VendorProfile.findOne({ user: req.user._id });
+
+  if (!profile) {
+    res.status(404);
+    throw new Error('Vendor profile not found.');
+  }
+
+  res.json(profile);
+});
+
+export { saveVendorProfile, getVendorProfile };

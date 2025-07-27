@@ -1,31 +1,63 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchVendorProfile,
+  saveVendorProfile,
+} from '@/redux/slices/vendorProfileSlice';
 import toast from 'react-hot-toast';
 
 const VendorProfileForm = () => {
+  const dispatch = useDispatch();
+  const { profile, loading } = useSelector((state) => state.vendorProfile);
+
   const [form, setForm] = useState({
-    companyName: '',
+    businessName: '',
     website: '',
-    whatsapp: '',
-    instagram: '',
-    facebook: '',
-    email: '',
-    phone: '',
-    notes: '',
+    contactEmail: '',
+    contactPhone: '',
+    location: '',
+    bio: '',
+    logoUrl: '',
+    social: {
+      facebook: '',
+      instagram: '',
+      whatsapp: '',
+      tiktok: '',
+      telegram: '',
+    },
   });
 
+  useEffect(() => {
+    dispatch(fetchVendorProfile());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (profile) {
+      setForm(profile);
+    }
+  }, [profile]);
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name in form.social) {
+      setForm((prev) => ({
+        ...prev,
+        social: { ...prev.social, [name]: value },
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Replace with Redux or axios POST later
-      console.log('📡 Submitting Vendor Profile:', form);
-      toast.success('Vendor profile saved');
+      await dispatch(saveVendorProfile(form)).unwrap();
+      toast.success('Profile saved successfully!');
     } catch (err) {
-      console.error(err); // ✅ resolves ESLint warning
-      toast.error('Failed to save profile');
+      console.error(err);
+      toast.error('Failed to save profile.');
     }
   };
 
@@ -37,9 +69,9 @@ const VendorProfileForm = () => {
       <h2 className="text-xl font-bold">Vendor Contact & Social Info</h2>
       <input
         type="text"
-        name="companyName"
-        placeholder="Company Name"
-        value={form.companyName}
+        name="businessName"
+        placeholder="Business Name"
+        value={form.businessName}
         onChange={handleChange}
         className="w-full border p-2 rounded"
       />
@@ -52,10 +84,51 @@ const VendorProfileForm = () => {
         className="w-full border p-2 rounded"
       />
       <input
+        type="email"
+        name="contactEmail"
+        placeholder="Support Email"
+        value={form.contactEmail}
+        onChange={handleChange}
+        className="w-full border p-2 rounded"
+      />
+      <input
+        type="tel"
+        name="contactPhone"
+        placeholder="Phone Number"
+        value={form.contactPhone}
+        onChange={handleChange}
+        className="w-full border p-2 rounded"
+      />
+      <input
         type="text"
-        name="whatsapp"
-        placeholder="WhatsApp Number"
-        value={form.whatsapp}
+        name="location"
+        placeholder="Location"
+        value={form.location}
+        onChange={handleChange}
+        className="w-full border p-2 rounded"
+      />
+      <textarea
+        name="bio"
+        placeholder="Short Bio or Description"
+        value={form.bio}
+        onChange={handleChange}
+        className="w-full border p-2 rounded"
+      />
+      <input
+        type="text"
+        name="logoUrl"
+        placeholder="Logo URL"
+        value={form.logoUrl}
+        onChange={handleChange}
+        className="w-full border p-2 rounded"
+      />
+
+      <h3 className="font-semibold mt-4">Social Links</h3>
+      <input
+        type="text"
+        name="facebook"
+        placeholder="Facebook Page"
+        value={form.social.facebook}
         onChange={handleChange}
         className="w-full border p-2 rounded"
       />
@@ -63,46 +136,40 @@ const VendorProfileForm = () => {
         type="text"
         name="instagram"
         placeholder="Instagram Profile"
-        value={form.instagram}
+        value={form.social.instagram}
         onChange={handleChange}
         className="w-full border p-2 rounded"
       />
       <input
         type="text"
-        name="facebook"
-        placeholder="Facebook Page"
-        value={form.facebook}
+        name="whatsapp"
+        placeholder="WhatsApp Number"
+        value={form.social.whatsapp}
         onChange={handleChange}
         className="w-full border p-2 rounded"
       />
       <input
-        type="email"
-        name="email"
-        placeholder="Support Email"
-        value={form.email}
+        type="text"
+        name="tiktok"
+        placeholder="TikTok Handle"
+        value={form.social.tiktok}
         onChange={handleChange}
         className="w-full border p-2 rounded"
       />
       <input
-        type="tel"
-        name="phone"
-        placeholder="Phone Number"
-        value={form.phone}
+        type="text"
+        name="telegram"
+        placeholder="Telegram Link"
+        value={form.social.telegram}
         onChange={handleChange}
         className="w-full border p-2 rounded"
       />
-      <textarea
-        name="notes"
-        placeholder="Optional Notes or Description"
-        value={form.notes}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      />
+
       <button
         type="submit"
         className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
       >
-        Save Profile
+        {loading ? 'Saving...' : 'Save Profile'}
       </button>
     </form>
   );
