@@ -1,115 +1,75 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { registerUser } from '@/redux/slices/authSlice';
+import { registerUser } from '@/redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import toast from 'react-hot-toast';
 
 const PersonalRegisterScreen = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const { selectedRole, loading, error, isAuthenticated } = useSelector(
-    (state) => state.auth
-  );
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState(searchParams.get('email') || '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const { userInfo, error } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!selectedRole) {
-      navigate('/register/account-type');
-    }
-  }, [selectedRole, navigate]);
+    if (userInfo) navigate('/account');
+  }, [userInfo, navigate]);
 
-  useEffect(() => {
-    const emailFromUrl = searchParams.get('email');
-    if (emailFromUrl) {
-      setForm((prev) => ({ ...prev, email: emailFromUrl }));
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      toast.success('🎉 Welcome! Your account has been created.');
-
-      // Redirect based on accountType and approval
-      if (selectedRole === 'vendor') {
-        navigate('/not-authorized'); // or /thank-you-awaiting-approval
-      } else {
-        navigate('/my-account/dashboard');
-      }
-    }
-  }, [isAuthenticated, navigate, selectedRole]);
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (form.password !== form.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
+    if (password !== confirmPassword) {
+      return alert('Passwords do not match');
     }
-
-    dispatch(registerUser({ ...form, role: selectedRole }));
+    dispatch(registerUser({ name, email, password, role: 'personal' }));
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 mt-12 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Personal Sign Up</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          name="name"
-          type="text"
-          placeholder="Your Name"
-          value={form.name}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
-        <input
-          name="email"
-          type="email"
-          placeholder="you@example.com"
-          value={form.email}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
-        <input
-          name="confirmPassword"
-          type="password"
-          placeholder="Confirm Password"
-          value={form.confirmPassword}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
-        <button
-          type="submit"
-          className="bg-black text-white py-2 w-full rounded hover:bg-gray-800"
-          disabled={loading}
-        >
-          {loading ? 'Creating account...' : 'Register as Personal'}
-        </button>
-      </form>
-      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4">Create Personal Account</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Name"
+            value={name}
+            className="w-full px-4 py-2 border rounded"
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            className="w-full px-4 py-2 border rounded"
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            className="w-full px-4 py-2 border rounded"
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            className="w-full px-4 py-2 border rounded"
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <button className="w-full bg-black text-white py-2 rounded hover:bg-gray-800">
+            Register
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

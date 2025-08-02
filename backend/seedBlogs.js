@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config({ quiet: true });
+
 import connectDB from './config/db.js';
 import Blog from './models/Blog.js';
+import { logSeed } from './utils/logSeed.js';
 
 const blogs = [
   {
@@ -13,17 +15,26 @@ const blogs = [
   },
 ];
 
-export default async function seedBlogs() {
+export async function seedBlogs() {
+  logSeed('Blogs', 'start');
   try {
-    await connectDB();
     await Blog.deleteMany();
     await Blog.insertMany(blogs);
-    console.log(`✅ Seeded ${blogs.length} blogs`);
+    logSeed('Blogs', 'success', blogs.length);
   } catch (err) {
-    console.error('❌ Blog seeding failed:', err.message);
+    logSeed('Blogs', 'error');
+    console.error(err);
+    throw err;
   }
 }
 
+// Standalone CLI execution
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedBlogs();
+  try {
+    await connectDB();
+    await seedBlogs();
+    process.exit(0);
+  } catch (err) {
+    process.exit(1);
+  }
 }

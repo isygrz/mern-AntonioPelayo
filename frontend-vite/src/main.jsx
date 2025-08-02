@@ -8,7 +8,7 @@ import './index.css';
 
 // ✅ Optional: Expose for DevTools
 import { fetchAllProducts } from './redux/slices/productSlice.js';
-import { fetchBlogs } from './redux/slices/blogSlice.js';
+import { fetchAllBlogs } from './redux/slices/blogSlice.js';
 import { updateCmsLayout } from './redux/slices/cmsSlice.js';
 
 // ✅ Moved to its own file
@@ -32,7 +32,7 @@ root.render(
 if (import.meta.env.MODE === 'development' && typeof window !== 'undefined') {
   window.store = store;
   window.fetchAllProducts = fetchAllProducts;
-  window.fetchBlogs = fetchBlogs;
+  window.fetchAllBlogs = fetchAllBlogs;
   window.updateCmsLayout = updateCmsLayout;
   console.log('🧪 Redux store and thunks exposed on window');
 }

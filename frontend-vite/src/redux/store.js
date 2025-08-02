@@ -11,7 +11,7 @@ import heroReducer from './slices/heroSlice';
 import cmsReducer from './slices/cmsSlice';
 import footerReducer from './slices/footerSlice';
 import usersReducer from './slices/userSlice';
-import vendorProfileReducer from './slices/vendorProfileSlice'; // ✅ New vendor profile slice
+import vendorProfileReducer from './slices/vendorProfileSlice';
 
 const store = configureStore({
   reducer: {
@@ -26,7 +26,7 @@ const store = configureStore({
     cms: cmsReducer,
     footer: footerReducer,
     users: usersReducer,
-    vendorProfile: vendorProfileReducer, // ✅ Registered slice
+    vendorProfile: vendorProfileReducer,
   },
 });
 

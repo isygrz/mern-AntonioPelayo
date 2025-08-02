@@ -6,7 +6,7 @@ import Product from './models/Product.js';
 import Order from './models/Order.js';
 import Badge from './models/Badge.js';
 import Blog from './models/Blog.js';
-import CMS from './models/Cms.js';
+import CMS from './models/Cms.model.js';
 import Footer from './models/Footer.js';
 
 dotenv.config({ override: true }); // 🧽 Prevents duplicates during reuse

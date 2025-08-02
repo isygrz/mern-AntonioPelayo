@@ -1,43 +1,29 @@
-import dotenv from 'dotenv';
-dotenv.config({ quiet: true });
+import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import Product from './models/Product.js';
+import { products } from './data/products.js';
+import { logSeed } from './utils/logSeed.js';
 
-const products = [
-  {
-    name: 'Talavera Blue Tile',
-    slug: 'talavera-blue-tile',
-    image: '/uploads/product-1.jpg',
-    badge: 'New',
-    price: 25.0,
-    description:
-      'Handcrafted blue tile inspired by traditional Talavera techniques.',
-    countInStock: 100,
-    isSample: false,
-  },
-  {
-    name: 'Oaxacan Sun Tile',
-    slug: 'oaxacan-sun-tile',
-    image: '/uploads/product-2.jpg',
-    badge: 'Limited',
-    price: 30.0,
-    description: 'Vibrant yellow-orange tones reflect the Oaxacan sun.',
-    countInStock: 50,
-    isSample: false,
-  },
-];
-
-export default async function seedProducts() {
+export async function seedProducts() {
+  logSeed('Products', 'start');
   try {
-    await connectDB();
     await Product.deleteMany();
-    await Product.insertMany(products);
-    console.log(`✅ Seeded ${products.length} products`);
+    const created = await Product.insertMany(products);
+    logSeed('Products', 'success', created.length);
   } catch (err) {
-    console.error('❌ Product seeding failed:', err.message);
+    logSeed('Products', 'error');
+    console.error(err);
+    throw err;
   }
 }
 
+// Allow standalone CLI execution
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedProducts();
+  try {
+    await connectDB();
+    await seedProducts();
+    mongoose.disconnect();
+  } catch (err) {
+    process.exit(1);
+  }
 }

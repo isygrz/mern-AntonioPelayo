@@ -1,49 +1,28 @@
-import crypto from 'crypto';
+import mongoose from 'mongoose';
+import connectDB from './config/db.js';
+import CMS from './models/Cms.model.js';
+import { cmsSections } from './data/cms.js';
+import { logSeed } from './utils/logSeed.js';
 
-export const seedCmsData = {
-  sections: [
-    {
-      _id: crypto.randomBytes(16).toString('hex'),
-      type: 'hero',
-      order: 0,
-      route: '/',
-      config: {
-        headline: 'Antonio Pelayo Studio',
-        subtext: 'From Canvas to Cultura',
-        image: '/uploads/hero1.jpg',
-        ctaText: 'Explore the Collection',
-        ctaLink: '/products',
-      },
-    },
-    {
-      _id: crypto.randomBytes(16).toString('hex'),
-      type: 'promoGrid',
-      order: 1,
-      route: '/',
-      config: {
-        tiles: [
-          {
-            title: 'Fine Art Prints',
-            image: '/uploads/print1.jpg',
-            link: '/products?category=prints',
-          },
-          {
-            title: 'Limited Edition',
-            image: '/uploads/limited.jpg',
-            link: '/products?tag=limited',
-          },
-        ],
-      },
-    },
-    {
-      _id: crypto.randomBytes(16).toString('hex'),
-      type: 'blogPreview',
-      order: 2,
-      route: '/',
-      config: {
-        headline: 'From the Studio',
-        numPosts: 3,
-      },
-    },
-  ],
-};
+export async function seedCms() {
+  logSeed('CMS', 'start');
+  try {
+    await CMS.deleteMany();
+    const created = await CMS.insertMany(cmsSections);
+    logSeed('CMS', 'success', created.length);
+  } catch (err) {
+    logSeed('CMS', 'error');
+    console.error(err);
+    throw err;
+  }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  try {
+    await connectDB();
+    await seedCms();
+    mongoose.disconnect();
+  } catch (err) {
+    process.exit(1);
+  }
+}

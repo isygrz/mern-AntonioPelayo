@@ -1,29 +1,28 @@
-import dotenv from 'dotenv';
-dotenv.config({ quiet: true });
+import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import Hero from './models/Hero.js';
+import { heroes } from './data/heroes.js';
+import { logSeed } from './utils/logSeed.js';
 
-const heroSeed = [
-  {
-    heading: 'Timeless Design, Handmade in Jalisco',
-    subheading: 'Explore our artisan tiles and bring heritage to your home.',
-    image: '/uploads/hero-1.jpg',
-    ctaText: 'Shop Now',
-    ctaUrl: '/shop',
-  },
-];
-
-export default async function seedHeroes() {
+export async function seedHeroes() {
+  logSeed('Heroes', 'start');
   try {
-    await connectDB();
     await Hero.deleteMany();
-    await Hero.insertMany(heroSeed);
-    console.log('✅ Hero section seeded!');
+    const created = await Hero.insertMany(heroes);
+    logSeed('Heroes', 'success', created.length);
   } catch (err) {
-    console.error('❌ Hero seeding failed:', err.message);
+    logSeed('Heroes', 'error');
+    console.error(err);
+    throw err;
   }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedHeroes();
+  try {
+    await connectDB();
+    await seedHeroes();
+    mongoose.disconnect();
+  } catch (err) {
+    process.exit(1);
+  }
 }

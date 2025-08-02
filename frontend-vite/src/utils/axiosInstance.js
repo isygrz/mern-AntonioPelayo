@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: '/api', // ✅ this will resolve correctly in dev with proxy
-  withCredentials: true, // optional: if using cookies
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+  withCredentials: true,
 });
 
 export default axiosInstance;

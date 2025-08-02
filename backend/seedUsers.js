@@ -1,40 +1,28 @@
-import dotenv from 'dotenv';
-dotenv.config({ quiet: true });
-import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import User from './models/User.js';
+import { users } from './data/users.js';
+import { logSeed } from './utils/logSeed.js';
 
-const users = [
-  {
-    name: 'Admin User',
-    email: 'admin@example.com',
-    password: bcrypt.hashSync('123456', 10),
-    isAdmin: true,
-  },
-  {
-    name: 'Regular User',
-    email: 'user@example.com',
-    password: bcrypt.hashSync('123456', 10),
-    isAdmin: false,
-  },
-];
-
-export default async function seedUsers() {
+export async function seedUsers() {
+  logSeed('Users', 'start');
   try {
     await User.deleteMany();
-    await User.insertMany(users);
-    console.log(`✅ Seeded ${users.length} users`);
+    const created = await User.insertMany(users);
+    logSeed('Users', 'success', created.length);
   } catch (err) {
-    console.error('❌ User seeding failed:', err.message);
-    process.exit(1);
+    logSeed('Users', 'error');
+    console.error(err);
+    throw err;
   }
 }
 
-// ✅ Only run if this script is executed directly via CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
-  (async () => {
+  try {
     await connectDB();
     await seedUsers();
-    process.exit();
-  })();
+    mongoose.disconnect();
+  } catch (err) {
+    process.exit(1);
+  }
 }

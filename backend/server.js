@@ -10,33 +10,42 @@ import userRoutes from './routes/userRoutes.js';
 import seedRoutes from './routes/seedRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import mobileSessionRoutes from './routes/mobileSessionRoutes.js';
+import cmsRoutes from './routes/cmsRoutes.js';
+import blogRoutes from './routes/blogRoutes.js';
 
-// Load environment variables first
 dotenv.config();
-
-// Connect to MongoDB
 connectDB();
 
 const app = express();
 
+// ✅ Fix CORS config to allow credentials securely
+const allowedOrigins = ['http://localhost:5173']; // Replace with production frontend if needed
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// API Routes
+// Routes
 app.use('/api/products', productRoutes);
 app.use('/api/seed', seedRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/mobile-sessions', mobileSessionRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/cms', cmsRoutes);
+app.use('/api/blogs', blogRoutes);
 
-// Serve static files from /uploads
+// Serve static uploads
 const __dirnameFull = path.resolve();
 app.use('/uploads', express.static(path.join(__dirnameFull, '/uploads')));
 
-// Start Server
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);

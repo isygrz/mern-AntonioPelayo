@@ -1411,3 +1411,310 @@
 - Removed legacy redirect messaging: “Deprecated screen, use Email Check Flow”
 - Confirmed that Redux flow + API integration now functions with no `404` or thunk errors
 - `favicon.ico` 404 ignored (non-critical), and WebSocket devtool messages are browser extension-related
+
+120. Lucide Icon Integration for Smart Email Flow
+
+- Installed lucide-react to enable consistent SVG icon usage across the UI
+- Replaced placeholder image block in EmailCheckScreen.jsx with:
+  → <MailCheck /> icon from Lucide
+- Updated layout to align icon centrally and adjust spacing responsively
+
+121. Smart Sign-In Screen Debugging + Error Diagnosis
+
+- Fixed logic error in SignInScreenSmart.jsx where email was sometimes not passed via query params
+  → Ensured email is extracted from URLSearchParams properly
+- Updated toast messaging:
+  → Displays correct Login failed notice on 401 responses
+  → Prevents silent fails when API endpoint is unreachable
+
+122. Axios Base URL Fix for Local Dev API Proxying
+
+- Refactored axiosInstance.js:
+  → Removed duplicate /api/api/ issue caused by nested base URLs
+  → Final base URL logic now reads: baseURL: '/api' for proxy handling
+- Verified both /users/login and /users/check-email return correct results in dev mode
+
+123. API Proxy Path Errors: Resolved
+
+- Investigated repeated (EM)Prompt_entry 404s tied to incorrect Axios routes
+- Root Cause:
+  → Misconfigured double /api/api/... calls due to base URL + route redundancy
+- Resolution:
+  → Updated authSlice.js thunks to remove manual /api prefix, now relying on axiosInstance base
+
+124. Redux Auth Slice Cleanup
+
+- Finalized consistent thunk pattern in authSlice.js:
+  → loginUser, registerUser, logoutUser, checkEmailStatus
+- Removed redundant extraReducers blocks
+- Verified reducer keys in store.js for full compatibility with Smart Auth Flow
+
+125. CMS Slice Audit & Middleware Readiness
+
+- Refactored cmsSlice.js to:
+  → Use consistent createAsyncThunk syntax
+  → Avoid duplicate calls to malformed routes
+- Added support for dynamic error toast dispatching on CMS fetch failures
+
+126. FeaturedProductSection Component
+
+- Introduced new CMS-compatible section: FeaturedProductSection.jsx
+  → Location: `FeaturedProductSection.jsx`
+  → Follows pattern: fetches Redux product state via useSelector(products)
+  → Renders featured tiles from config.featuredProductIds passed by CMS layout
+- Component logic:
+  → Accepts CMS config with an array of \_ids
+  → Filters Redux products.items for matching IDs
+  → Renders basic info (image, name, price)
+  → Optional: renders config.title (fallback = 'Featured Products')
+- Integrated in SectionRenderer.jsx:
+  → Added case 'featuredProduct' switch
+  → Layout controllable via drag-and-drop in SettingsManager.jsx
+
+127. Backend Patch: `cmsController.js` Hydration Logic
+
+- Patched getCmsByRoute in `cmsController.js` to hydrate blogPreview and featuredProduct:
+- Outcome:
+  → CMS layout dynamically populated with fresh backend data
+  → Reduces need for hardcoded content in config.items
+
+128. Reseeded CMS Data for Blog + Product Sections
+
+- Created `seedCmsData.js` to include seeded items arrays for:
+  → blogPreview
+  → featuredProduct
+- Updated `seedCms.js` to import from `seedCmsData.js` for real data hydration
+- Ran: node backend/seed.js --cms
+- Result:
+  → `/` CMS layout is seeded with dynamic blog and product content
+
+129. Verified CMS Layout in MongoDB
+
+- Confirmed CMS document for route `/` includes:
+  → hero section
+  → promoGrid section
+  → featuredProduct section with hydrated products
+  → blogPreview section with latest posts
+- Verified via: http://localhost:5000/api/cms?route=/
+
+130. Refactored `SectionRenderer.jsx` for Full Section Prop
+
+- Changed visual section props
+- From:
+  → <SectionComponent {...section.config} />
+- To:
+  → <SectionComponent section={section} />
+- Result:
+  → Full section object now accessible
+  → Components can access both type, order, and hydrated config.items
+
+131. Updated FeaturedProductSection & BlogPreviewSection
+
+- Adjusted both components to consume:
+  → section.config.items
+- Rendered hydrated arrays passed from backend
+- UI Enhancements:
+  → Responsive grid
+  → Fallbacks for missing content
+  → Section titles configurable from CMS
+
+132. Redux Slice Verification for Blog + Product Data
+
+- productSlice:
+  → Populates products array from backend
+- blogSlice:
+  → Populates blogList array
+- Verified:
+  → Redux DevTools
+  → network tab
+  → Console logs
+
+133. `HomeScreen.jsx` Defensive Defaults
+
+- Prevented destructuring crashes during Redux hydration:
+  → const { blogList = [] } = useSelector((state) => state.blog || {});
+  → const { products = [] } = useSelector((state) => state.product || {});
+- Result:
+  → Reliable screen render on refresh or slow load
+
+134. logSeed Utility & Emoji Logging Standardization
+
+- Created reusable `logSeed.js` utility for consistent CLI output:
+  → Location: `logSeed.js`
+- Functions:
+  → startSeed(label)
+  → endSeed(label)
+  → failSeed(label, error)
+- Standardized log format across all seed\*.js files:
+  → [seed:Badges] ✅ Seeded 5 badges
+  → [seed:Orders] ❌ Error seeding orders: <error>
+- Benefits:
+  → Easier debugging via clearly labeled output
+  → Consistent structure for logs and error handling
+
+135. Seed Data Refactor into backend/data Folder
+
+- Created central data payload directory:
+  → backend/data/
+  -Moved all seed arrays to separate modules:
+  → `usersData.js`
+  → `productsData.js`
+  → `badgesData.js`
+  → `blogsData.js`
+  → `heroesData.js`
+  → `footerData.js`
+  → `ordersData.js`
+  → `cmsData.js`
+- Refactored each seed\*.js file to import payloads:
+  → import users from `../data/usersData.js`;
+  → import products from `../data/productsData.js`;
+- Outcome:
+  → Clear separation of logic (seeders) and content (data)
+  → Simplified maintenance for growing or dynamic seed content
+
+136. Refactored All seed\*.js Scripts for Best Practices
+
+- Refactored all seed scripts to follow consistent structure:
+  → Import model + payload
+  → Use logSeed.js for logging
+  → Async/await with proper try/catch
+  → Use .deleteMany() before .insertMany() for clean state
+- Affected files:
+  → `seedUsers.js`
+  → `seedProducts.js`
+  → `seedOrders.js`
+  → `seedBadges.js`
+  → `seedBlogs.js`
+  → `seedHeroes.js`
+  → `seedFooter.js`
+  → `seedCms.js`
+- Each script runs standalone:
+  → node `seedUsers.js`
+- Can also be triggered via central `seed.js`
+
+137. Patched `seed.js` to Support Selective Seeding
+
+- Central `backend/seed.js` now includes:
+- CLI flags for targeting:
+  → `node seed.js --users`
+  → `node seed.js --cms`
+- Fallback to full-seed if no flag provided:
+  → `node seed.js`
+- Uses minimist for argument parsing
+- Unified emoji logging across all modules via logSeed.js
+
+138. Verified Full Reseed Functionality
+
+- Ran:
+  → `node backend/seed.js`
+- Confirmed logs:
+  → [seed:Users] ✅ Seeded 2 users
+  → [seed:Products] ✅ Seeded 12 products
+  → [seed:Orders] ✅ Seeded 3 orders
+  → [seed:Badges] ✅ Seeded 5 badges
+  ...
+- Confirmed seeded data in:
+  → MongoDB collections
+  → CMS route / hydration
+
+139. Dynamic CMS Layout Editor Integration
+
+- Implemented visual CMS layout editor in SettingsManager.jsx
+  → Allows admin to reorder, edit, and delete CMS sections
+- Component features:
+  → Add/edit section modal
+  → Drag-and-drop ordering via `SectionRow.jsx`
+  → Dynamic field types driven by schema
+  → Real-time visual previews (for selected types)
+- Redux cmsSlice wired to:
+  → Fetch CMS layout per route
+  → Update layout via updateCmsLayout thunk
+- Outcome:
+  → Admin users can fully configure homepage layout via UI
+  → No backend intervention required for content/design changes
+
+140. Configurable Section Schema Support
+
+- Created centralized CMS config schema:
+  → `cmsSchema.js`
+- Each section type (e.g., hero, promoGrid, featuredProduct) defines:
+  → Field types: text, textarea, image, toggle, select
+  → Validation rules and default values
+  → Labels and admin form hints
+- Used by:
+  → AddEditSectionModal.jsx
+  → SettingsManager.jsx
+- Outcome:
+  → Rapid creation of new visual sections
+  → Consistent field rendering and validation
+
+141. CMS Section Rendering via SectionRenderer.jsx
+
+- `SectionRenderer.jsx` now dynamically renders CMS layout based on:
+  → section.type
+  → section.config
+- Integrated components:
+  → HeroSection
+  → PromoGridSection
+  → FeaturedProductSection
+  → BlogPreviewSection
+  → Others as needed
+- Fallback display for unknown section types with admin warning
+- Supports runtime rendering of hydrated backend values (e.g., config.items)
+
+142. CMS Hydration Logic in `cmsController.js`
+
+- Implemented backend hydration for dynamic sections:
+  → featuredProduct: Fetches top 6 products, injects into section.config.items
+  → blogPreview: Fetches 3 latest blog posts, injects into section.config.items
+- Ensures:
+  → Real-time product/blog previews
+  → CMS layout documents remain minimal (no embedded data)
+
+143. Refactored All `seed*.js` Scripts for Named Imports
+
+- Replaced outdated or default `import ... from '../data/*.js'` in:
+  → `seedProducts.js`
+  → `seedUsers.js`
+  → `seedOrders.js`
+  → `seedHeroes.js`
+  → `seedBadges.js`
+  → `seedBlogs.js`
+  → `seedFooter.js`
+  → `seedCms.js`
+- Ensured use of structured named imports (e.g., `{ products }`) for clarity and consistency
+
+144. Patched `seedOrders.js` to Use Real Mongo ObjectIds
+
+- Removed invalid placeholders (`"seed_user_id_placeholder"`) in `orders.js`
+- Injected real `_id` values from `User.findOne()` and `Product.findOne()` dynamically before seeding orders
+- Deleted `orders.js` from `data/` since dynamic seeding is now schema-safe
+
+145. Removed `orders.js` Import from `seedRoutes.js`
+
+- Removed legacy `import { orders } from '../data/orders.js'` line from `seedRoutes.js`
+- Eliminated invalid `Order.insertMany(orders)` logic to prevent reference errors
+- Orders are now seeded solely via `seedOrders.js` using safe references
+
+146. Fixed Schema Field Mapping in `heroes.js`
+
+- Updated each hero object to use:
+  → `heading` instead of `title`
+  → `subheading` instead of `subtitle`
+- Prevented Mongoose validation error: `Hero validation failed: heading is required`
+
+147. Patched Typo in `seedFooter.js`
+
+- Replaced undefined `footer` with correct `footerData` when calling `Footer.insertMany(...)`
+- Restored seeding success for the footer entry
+
+148. Patched Typo in `seedCms.js`
+
+- Replaced undefined `cms` with correct `cmsSections` when calling `CMS.insertMany(...)`
+- CMS seeding now completes without reference errors
+
+149. Confirmed End-to-End Master Seed Success
+
+- Ran `node seed.js` and confirmed clean output across all modules:
+  → Users, Products, Orders, Badges, Heroes, Blogs, Footer, CMS
+- Verified that each seed script runs independently or via the `seed.js` CLI with consistent `logSeed()` output

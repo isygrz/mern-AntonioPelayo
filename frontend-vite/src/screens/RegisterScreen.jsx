@@ -1,54 +1,56 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from '../utils/axiosInstance';
-import Message from '../components/Message';
-import Loader from '../components/Loader';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { registerUser } from '@/redux';
+import { useSearchParams } from 'react-router-dom';
 
 const RegisterScreen = () => {
-  const [email, setEmail] = useState('');
-  const [checking, setChecking] = useState(false);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get('email') || '');
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('personal');
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleCheckEmail = async (e) => {
+  const submitHandler = async (e) => {
     e.preventDefault();
-    setChecking(true);
-    setError(null);
-
     try {
-      const { data } = await axios.post('/api/users/check-email', { email });
-
-      if (data.exists) {
-        navigate(`/signin?email=${email}`);
-      } else {
-        navigate(`/select-account-type?email=${email}`);
-      }
-    } catch {
-      setError('Email check failed. Please try again.');
-    } finally {
-      setChecking(false);
+      await dispatch(registerUser({ email, name, password, role })).unwrap();
+    } catch (err) {
+      setError(err.message || 'Registration failed');
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10">
-      <h1 className="text-2xl font-bold mb-6">Register</h1>
-      {error && <Message variant="danger">{error}</Message>}
-      {checking && <Loader />}
-      <form onSubmit={handleCheckEmail} className="space-y-4">
-        <input
-          type="email"
-          placeholder="Enter your email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="input input-bordered w-full"
-        />
-        <button type="submit" className="btn btn-accent w-full">
-          Continue
-        </button>
-      </form>
-    </div>
+    <form onSubmit={submitHandler}>
+      <label>Name:</label>
+      <input value={name} onChange={(e) => setName(e.target.value)} required />
+      <label>Email:</label>
+      <input
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      <label>Password:</label>
+      <input
+        type={show ? 'text' : 'password'}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+      <label>
+        <input type="checkbox" checked={show} onChange={() => setShow(!show)} />
+        Show password
+      </label>
+      <label>Account Type:</label>
+      <select value={role} onChange={(e) => setRole(e.target.value)}>
+        <option value="personal">Personal</option>
+        <option value="vendor">Vendor</option>
+      </select>
+      {error && <p>{error}</p>}
+      <button type="submit">Register</button>
+    </form>
   );
 };
 

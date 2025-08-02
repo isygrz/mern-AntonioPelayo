@@ -1,85 +1,66 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { loginUser } from '@/redux/slices/authSlice';
-import { toast } from 'react-hot-toast';
+import { loginUser } from '@/redux';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const SignInScreenSmart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const prefilledEmail = searchParams.get('email') || '';
+  const location = useLocation();
 
-  const [email] = useState(prefilledEmail);
+  const [email, setEmail] = useState(
+    new URLSearchParams(location.search).get('email') || ''
+  );
   const [password, setPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const { userInfo, loading, error } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    if (!prefilledEmail) {
-      toast.error('Missing email. Redirecting to check email screen...');
-      navigate('/check-email');
-    }
-  }, [prefilledEmail, navigate]);
+  const { userInfo, error } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (userInfo) {
-      toast.success(`Welcome back, ${userInfo.name || 'user'}!`);
-      navigate('/account');
-    }
+    if (userInfo) navigate('/account');
   }, [userInfo, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error('Email and password are required');
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      await dispatch(loginUser({ email, password })).unwrap();
-    } catch (err) {
-      toast.error(err?.message || 'Login failed');
-    } finally {
-      setSubmitting(false);
-    }
+    dispatch(loginUser({ email, password }));
   };
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-6 bg-white rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-4 text-center">Sign In</h2>
-      <p className="text-center text-sm text-gray-500 mb-4">
-        Signing in as{' '}
-        <span className="font-semibold text-gray-700">{email}</span>
-      </p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Password
-          </label>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4">Sign In</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="password"
-            value={password}
+            type="email"
+            placeholder="Email"
+            value={email}
+            className="w-full px-4 py-2 border rounded"
+            onChange={(e) => setEmail(e.target.value)}
             required
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
-            placeholder="••••••••"
           />
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting || loading}
-          className="w-full py-2 bg-black text-white font-semibold rounded hover:bg-gray-800"
-        >
-          {submitting ? 'Signing In…' : 'Sign In'}
-        </button>
-      </form>
-
-      {error && <p className="text-red-600 mt-3 text-center">{error}</p>}
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              value={password}
+              className="w-full px-4 py-2 border rounded"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2 text-sm text-gray-600"
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <button className="w-full bg-black text-white py-2 rounded hover:bg-gray-800">
+            Sign In
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

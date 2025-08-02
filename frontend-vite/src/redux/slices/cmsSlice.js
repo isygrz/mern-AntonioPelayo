@@ -1,53 +1,50 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from '@/utils/axiosInstance';
+import axios from '../../utils/axiosInstance';
 
+// ✅ Fetch CMS sections by route (e.g., '/')
 export const fetchCmsByRoute = createAsyncThunk(
-  'cms/fetchCmsByRoute',
-  async (route = '/', { rejectWithValue }) => {
+  'cms/fetchByRoute',
+  async (route, thunkAPI) => {
     try {
-      const { data } = await axios.get(`/cms?route=${route}`);
-      return { ...data, route };
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      const response = await axios.get(`/api/cms?route=${route}`);
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
 
+// ✅ Update CMS layout (e.g., after admin saves changes)
 export const updateCmsLayout = createAsyncThunk(
-  'cms/updateCmsLayout',
-  async ({ route, sections }, { rejectWithValue }) => {
+  'cms/updateCms',
+  async ({ route, sections }, thunkAPI) => {
     try {
-      const { data } = await axios.patch(`/api/cms`, { route, sections });
-      return data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      const response = await axios.patch(`/api/cms`, { route, sections });
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
+
+const initialState = {
+  items: [],
+  loading: false,
+  error: null,
+  success: false,
+};
 
 const cmsSlice = createSlice({
   name: 'cms',
-  initialState: {
-    route: '/',
-    sections: [],
-    loading: false,
-    error: null,
-    success: false,
-  },
+  initialState,
   reducers: {
     resetCmsStatus: (state) => {
       state.success = false;
       state.error = null;
-    },
-    reorderCmsSections: (state, action) => {
-      state.sections = action.payload;
-    },
-    resetCms: (state) => {
-      state.route = '/';
-      state.sections = [];
-      state.loading = false;
-      state.error = null;
-      state.success = false;
     },
   },
   extraReducers: (builder) => {
@@ -55,33 +52,30 @@ const cmsSlice = createSlice({
       .addCase(fetchCmsByRoute.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.success = false; // prevent stale success flag
       })
       .addCase(fetchCmsByRoute.fulfilled, (state, action) => {
         state.loading = false;
-        state.sections = action.payload?.sections || [];
-        state.route = action.payload?.route || '/';
+        state.items = action.payload.sections || [];
       })
       .addCase(fetchCmsByRoute.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || 'Failed to load CMS sections.';
       })
       .addCase(updateCmsLayout.pending, (state) => {
         state.loading = true;
         state.success = false;
       })
-      .addCase(updateCmsLayout.fulfilled, (state, action) => {
+      .addCase(updateCmsLayout.fulfilled, (state) => {
         state.loading = false;
         state.success = true;
-        state.sections = action.payload.sections;
       })
       .addCase(updateCmsLayout.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.success = false;
+        state.error = action.payload || 'Failed to update CMS layout.';
       });
   },
 });
 
-export const { resetCmsStatus, reorderCmsSections, resetCms } =
-  cmsSlice.actions;
+export const { resetCmsStatus } = cmsSlice.actions;
 export default cmsSlice.reducer;

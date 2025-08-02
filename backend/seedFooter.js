@@ -1,41 +1,28 @@
-import dotenv from 'dotenv';
-dotenv.config({ quiet: true });
-import connectDB from './db.js';
+import mongoose from 'mongoose';
+import connectDB from './config/db.js';
 import Footer from './models/Footer.js';
+import { footerData } from './data/footer.js';
+import { logSeed } from './utils/logSeed.js';
 
-const footerSeed = [
-  {
-    columns: [
-      {
-        heading: 'Resources',
-        links: [
-          { label: 'Blog', url: '/blog' },
-          { label: 'Contact', url: '/contact' },
-        ],
-      },
-      {
-        heading: 'Company',
-        links: [
-          { label: 'About', url: '/about' },
-          { label: 'Careers', url: '/careers' },
-        ],
-      },
-    ],
-    bottomText: '© 2025 JaliscoTile. All rights reserved.',
-  },
-];
-
-export default async function seedFooter() {
+export async function seedFooter() {
+  logSeed('Footer', 'start');
   try {
-    await connectDB();
     await Footer.deleteMany();
-    await Footer.insertMany(footerSeed);
-    console.log('✅ Footer seeded!');
+    const created = await Footer.insertMany(footerData);
+    logSeed('Footer', 'success', created.length);
   } catch (err) {
-    console.error('❌ Footer seeding failed:', err.message);
+    logSeed('Footer', 'error');
+    console.error(err);
+    throw err;
   }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedFooter();
+  try {
+    await connectDB();
+    await seedFooter();
+    mongoose.disconnect();
+  } catch (err) {
+    process.exit(1);
+  }
 }

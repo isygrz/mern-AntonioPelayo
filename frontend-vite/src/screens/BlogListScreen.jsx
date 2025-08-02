@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBlogs } from '../redux/slices/blogSlice';
+import { fetchAllBlogs } from '../redux/slices/blogSlice';
 import { Link } from 'react-router-dom';
 
 const BlogListScreen = () => {
@@ -8,7 +8,7 @@ const BlogListScreen = () => {
   const { items: blogs, loading, error } = useSelector((state) => state.blogs);
 
   useEffect(() => {
-    dispatch(fetchBlogs());
+    dispatch(fetchAllBlogs());
   }, [dispatch]);
 
   return (

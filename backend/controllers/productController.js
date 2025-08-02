@@ -1,20 +1,20 @@
-import asyncHandler from 'express-async-handler';
+import asyncHandler from '../middleware/asyncHandler.js';
 import Product from '../models/Product.js';
+import slugify from 'slugify';
 
 // @desc    Fetch all products
 // @route   GET /api/products
 // @access  Public
-export const getProducts = asyncHandler(async (req, res) => {
+const getProducts = asyncHandler(async (req, res) => {
   const products = await Product.find({});
   res.json(products);
 });
 
-// @desc    Fetch single product by ID
+// @desc    Fetch product by ID
 // @route   GET /api/products/:id
 // @access  Public
-export const getProductById = asyncHandler(async (req, res) => {
+const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
-
   if (product) {
     res.json(product);
   } else {
@@ -23,15 +23,11 @@ export const getProductById = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Fetch single product by slug
+// @desc    Fetch product by slug
 // @route   GET /api/products/slug/:slug
 // @access  Public
-export const getProductBySlug = asyncHandler(async (req, res) => {
+const getProductBySlug = asyncHandler(async (req, res) => {
   const product = await Product.findOne({ slug: req.params.slug });
-
-  console.log(`🔍 Slug lookup: ${req.params.slug}`);
-  console.log(product ? '✅ Found product by slug' : '❌ Product not found');
-
   if (product) {
     res.json(product);
   } else {
@@ -42,42 +38,46 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
 
 // @desc    Create a new product
 // @route   POST /api/products
-// @access  Private/Admin
-export const createProduct = asyncHandler(async (req, res) => {
-  const product = new Product({
+// @access  Admin
+const createProduct = asyncHandler(async (req, res) => {
+  const sampleProduct = new Product({
     name: 'Sample Product',
-    slug: 'sample-product',
+    slug: slugify('Sample Product', { lower: true, strict: true }),
     price: 0,
-    description: '',
-    image: '',
-    badge: '',
+    user: req.user._id,
+    image: '/images/sample.jpg',
+    badge: null,
+    brand: 'Sample Brand',
+    category: 'Sample Category',
     countInStock: 0,
+    numReviews: 0,
+    description: 'Sample description',
   });
 
-  const createdProduct = await product.save();
+  const createdProduct = await sampleProduct.save();
   res.status(201).json(createdProduct);
 });
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
-// @access  Private/Admin
-export const updateProduct = asyncHandler(async (req, res) => {
-  const { name, slug, price, description, image, badge, countInStock } =
-    req.body;
-
+// @access  Admin
+const updateProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
-
   if (product) {
-    product.name = name || product.name;
-    product.slug = slug || product.slug;
-    product.price = price || product.price;
-    product.description = description || product.description;
-    product.image = image || product.image;
-    product.badge = badge || product.badge;
-    product.countInStock = countInStock || product.countInStock;
+    product.name = req.body.name || product.name;
+    product.price = req.body.price || product.price;
+    product.description = req.body.description || product.description;
+    product.image = req.body.image || product.image;
+    product.badge = req.body.badge || product.badge;
+    product.countInStock = req.body.countInStock || product.countInStock;
+    product.isSample = req.body.isSample ?? product.isSample;
 
-    const updated = await product.save();
-    res.json(updated);
+    if (!product.slug || req.body.name) {
+      product.slug = slugify(product.name, { lower: true, strict: true });
+    }
+
+    const updatedProduct = await product.save();
+    res.json(updatedProduct);
   } else {
     res.status(404);
     throw new Error('Product not found');
@@ -86,10 +86,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
-// @access  Private/Admin
-export const deleteProduct = asyncHandler(async (req, res) => {
+// @access  Admin
+const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
-
   if (product) {
     await product.remove();
     res.json({ message: 'Product removed' });
@@ -98,3 +97,12 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     throw new Error('Product not found');
   }
 });
+
+export {
+  getProducts,
+  getProductById,
+  getProductBySlug,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+};

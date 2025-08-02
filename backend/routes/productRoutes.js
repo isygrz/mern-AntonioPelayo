@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getProducts,
   getProductById,
+  getProductBySlug,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -12,8 +13,9 @@ import verifyMobileSessionMiddleware from '../middleware/verifyMobileSessionMidd
 const router = express.Router();
 
 router.get('/', getProducts);
-router.get('/:id', getProductById);
+router.get('/slug/:slug', getProductBySlug); // ✅ Must come before `/:id`
 router.get('/mobile/:id', verifyMobileSessionMiddleware, getProductById); // ➕ secure fallback
+router.get('/:id', getProductById);
 
 // Admin
 router.post('/', protect, admin, createProduct);

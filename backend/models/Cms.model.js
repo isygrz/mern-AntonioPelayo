@@ -1,23 +1,24 @@
 import mongoose from 'mongoose';
 
-const settingsSchema = new mongoose.Schema(
+const configSchema = new mongoose.Schema(
   {
-    headline: { type: String },
-    text: { type: String },
-    imageUrl: { type: String },
-    buttonText: { type: String },
-    buttonLink: { type: String },
-    quote: { type: String },
-    author: { type: String },
-    question: { type: String },
-    answer: { type: String },
-    placeholder: { type: String },
-    features: { type: [String] },
-    iframeUrl: { type: String },
-    videoUrl: { type: String },
-    platform: { type: String },
-    embedCode: { type: String },
-    html: { type: String },
+    title: String,
+    subtitle: String,
+    backgroundImage: String,
+    ctaText: String,
+    ctaLink: String,
+    items: [
+      {
+        title: String,
+        image: String,
+        link: String,
+      },
+    ],
+    maxItems: Number,
+    showExcerpt: Boolean,
+    html: String,
+    embedCode: String,
+    // Add more keys as needed
   },
   { _id: false }
 );
@@ -47,12 +48,13 @@ const sectionSchema = new mongoose.Schema(
         'collectionShowcase',
         'productHighlight',
         'socialEmbed',
-        'custom', // fallback/custom builder
+        'featuredProduct',
+        'custom',
       ],
     },
     enabled: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
-    settings: settingsSchema,
+    config: configSchema, // ✅ match frontend logic
   },
   { _id: false }
 );
@@ -65,7 +67,7 @@ const cmsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Prevent OverwriteModelError during dev or HMR
+// ✅ Prevent OverwriteModelError in dev
 const CMS = mongoose.models.CMS || mongoose.model('CMS', cmsSchema);
 
 export default CMS;
