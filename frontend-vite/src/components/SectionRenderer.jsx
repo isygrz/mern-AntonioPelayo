@@ -1,33 +1,44 @@
-import React from 'react';
-import HeroSection from './sections/HeroSection';
-import PromoGridSection from './sections/PromoGridSection';
-import BlogPreviewSection from './sections/BlogPreviewSection';
-import FeaturedProductSection from './sections/FeaturedProductSection';
+import HeroSection from './sections/HeroSection.jsx';
+import PromoGridSection from './sections/PromoGridSection.jsx';
+import FeaturedProductSection from './sections/FeaturedProductSection.jsx';
+import BlogPreviewSection from './sections/BlogPreviewSection.jsx';
 
-const SectionRenderer = ({ sections = [] }) => {
+// Map CMS section types to their corresponding React components
+const SECTION_MAP = {
+  hero: HeroSection,
+  promoGrid: PromoGridSection,
+  featuredProduct: FeaturedProductSection,
+  blogPreview: BlogPreviewSection,
+};
+
+const SectionRenderer = ({ sections = [], products = [], blogs = [] }) => {
+  if (!Array.isArray(sections) || sections.length === 0) {
+    return (
+      <p className="text-center text-gray-500">No CMS sections to display.</p>
+    );
+  }
+
+  console.log('🔍 CMS Sections in Renderer:', sections);
+
   return (
     <>
       {sections.map((section, index) => {
-        const { type, config = {} } = section;
+        const { type, config = {}, enabled = false } = section;
 
-        switch (type) {
-          case 'hero':
-            return <HeroSection key={`hero-${index}`} config={config} />;
+        if (!enabled || !type) return null;
 
-          case 'promoGrid':
-            return <PromoGridSection key={`promo-${index}`} config={config} />;
+        const Component = SECTION_MAP[type];
 
-          case 'blogPreview':
-            return <BlogPreviewSection key={`blog-${index}`} config={config} />;
-
-          case 'featuredProduct':
-            return (
-              <FeaturedProductSection key={`feat-${index}`} config={config} />
-            );
-
-          default:
-            return null; // unknown section type — skip silently
+        if (!Component) {
+          console.warn(`⚠️ Unknown CMS section type: '${type}'`);
+          return null;
         }
+
+        return (
+          <div key={index} className="section-wrapper">
+            <Component config={config} products={products} blogs={blogs} />
+          </div>
+        );
       })}
     </>
   );

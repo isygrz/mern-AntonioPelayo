@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import toast from 'react-hot-toast';
 import cmsFieldConfig from '@/config/cmsSchema';
+import FieldRenderer from '../cms/FieldRenderer'; // Ensure this exists
 
 const AddEditSectionModal = ({ isOpen, onClose, section, onSave }) => {
   const [formState, setFormState] = useState({});
@@ -24,51 +25,6 @@ const AddEditSectionModal = ({ isOpen, onClose, section, onSave }) => {
 
   const fields = cmsFieldConfig[section.type] || [];
 
-  const renderInput = ({ key, type = 'text', options }) => {
-    switch (type) {
-      case 'textarea':
-        return (
-          <textarea
-            value={formState[key] || ''}
-            onChange={(e) => handleChange(key, e.target.value)}
-            className="mt-1 w-full px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-sm"
-          />
-        );
-      case 'toggle':
-        return (
-          <input
-            type="checkbox"
-            checked={!!formState[key]}
-            onChange={(e) => handleChange(key, e.target.checked)}
-            className="mt-1"
-          />
-        );
-      case 'select':
-        return (
-          <select
-            value={formState[key] || ''}
-            onChange={(e) => handleChange(key, e.target.value)}
-            className="mt-1 w-full px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-sm"
-          >
-            {options?.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        );
-      default:
-        return (
-          <input
-            type="text"
-            value={formState[key] || ''}
-            onChange={(e) => handleChange(key, e.target.value)}
-            className="mt-1 w-full px-3 py-1.5 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-sm"
-          />
-        );
-    }
-  };
-
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -86,7 +42,11 @@ const AddEditSectionModal = ({ isOpen, onClose, section, onSave }) => {
                   <label className="block text-sm font-medium capitalize text-neutral-700 dark:text-neutral-200">
                     {field.label || field.key}
                   </label>
-                  {renderInput(field)}
+                  <FieldRenderer
+                    type={field.type}
+                    value={formState[field.key] || ''}
+                    onChange={(val) => handleChange(field.key, val)}
+                  />
                 </div>
               ))}
             </div>

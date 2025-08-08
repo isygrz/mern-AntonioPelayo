@@ -1,13 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from '../../utils/axiosInstance';
+import axios from '@/utils/axiosInstance';
 
-// ✅ Fetch CMS sections by route (e.g., '/')
 export const fetchCmsByRoute = createAsyncThunk(
   'cms/fetchByRoute',
   async (route, thunkAPI) => {
     try {
-      const response = await axios.get(`/api/cms?route=${route}`);
-      return response.data;
+      const { data } = await axios.get(`/api/cms?route=${route}`);
+      return data.sections || [];
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
@@ -16,13 +15,12 @@ export const fetchCmsByRoute = createAsyncThunk(
   }
 );
 
-// ✅ Update CMS layout (e.g., after admin saves changes)
 export const updateCmsLayout = createAsyncThunk(
-  'cms/updateCms',
+  'cms/updateLayout',
   async ({ route, sections }, thunkAPI) => {
     try {
-      const response = await axios.patch(`/api/cms`, { route, sections });
-      return response.data;
+      const { data } = await axios.patch(`/api/cms`, { route, sections });
+      return data.sections;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
@@ -30,21 +28,20 @@ export const updateCmsLayout = createAsyncThunk(
     }
   }
 );
-
-const initialState = {
-  items: [],
-  loading: false,
-  error: null,
-  success: false,
-};
 
 const cmsSlice = createSlice({
   name: 'cms',
-  initialState,
+  initialState: {
+    sections: [],
+    loading: false,
+    error: null,
+    updateSuccess: false,
+  },
   reducers: {
     resetCmsStatus: (state) => {
-      state.success = false;
+      state.loading = false;
       state.error = null;
+      state.updateSuccess = false;
     },
   },
   extraReducers: (builder) => {
@@ -55,24 +52,26 @@ const cmsSlice = createSlice({
       })
       .addCase(fetchCmsByRoute.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.sections || [];
+        state.sections = action.payload;
       })
       .addCase(fetchCmsByRoute.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Failed to load CMS sections.';
+        state.error = action.payload || 'Failed to load CMS sections';
       })
+
       .addCase(updateCmsLayout.pending, (state) => {
         state.loading = true;
-        state.success = false;
+        state.error = null;
+        state.updateSuccess = false;
       })
-      .addCase(updateCmsLayout.fulfilled, (state) => {
+      .addCase(updateCmsLayout.fulfilled, (state, action) => {
         state.loading = false;
-        state.success = true;
+        state.sections = action.payload;
+        state.updateSuccess = true;
       })
       .addCase(updateCmsLayout.rejected, (state, action) => {
         state.loading = false;
-        state.success = false;
-        state.error = action.payload || 'Failed to update CMS layout.';
+        state.error = action.payload || 'Failed to update CMS layout';
       });
   },
 });

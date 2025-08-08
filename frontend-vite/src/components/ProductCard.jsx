@@ -13,7 +13,7 @@ export default function ProductCard({ product, inSampleCart, onToggleSample }) {
             src={
               product.imageGallery ||
               product.image ||
-              '/images/default-tile.jpg'
+              'http://localhost:5000/uploads/p5.jpeg'
             }
             alt={product.name || 'Product'}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"

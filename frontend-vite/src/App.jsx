@@ -1,5 +1,10 @@
 import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
+
+// Redux
+import { fetchFooter } from '@/redux/slices/footerSlice';
 
 // Screens
 import HomeScreen from './screens/HomeScreen.jsx';
@@ -45,13 +50,19 @@ import MobileSessionLauncher from './screens/account/tools/MobileSessionLauncher
 // Route Guards
 import ProtectedRoute from './components/routing/ProtectedRoute.jsx';
 import AdminRoute from './components/routing/AdminRoute.jsx';
-import VendorRoute from './components/routing/VendorRoute.jsx'; // ✅ NEW
+import VendorRoute from './components/routing/VendorRoute.jsx';
 
 // Layout
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchFooter());
+  }, [dispatch]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

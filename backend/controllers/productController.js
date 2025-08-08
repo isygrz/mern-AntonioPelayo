@@ -45,7 +45,7 @@ const createProduct = asyncHandler(async (req, res) => {
     slug: slugify('Sample Product', { lower: true, strict: true }),
     price: 0,
     user: req.user._id,
-    image: '/images/sample.jpg',
+    image: 'http://localhost:5000/uploads/p4.jpeg',
     badge: null,
     brand: 'Sample Brand',
     category: 'Sample Category',

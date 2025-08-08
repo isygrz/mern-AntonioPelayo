@@ -4,21 +4,19 @@ export function logSeed(moduleName, action, count = null) {
     success: '✅',
     error: '❌',
     skip: '⚠️',
+    info: '🔹',
+    warn: '⚠️',
   };
 
-  const messages = {
-    start: `[seed:${moduleName}] ${symbols.start} Starting ${moduleName} seeding...`,
-    success: `[seed:${moduleName}] ${
-      symbols.success
-    } Successfully seeded ${count} ${moduleName.toLowerCase()} entries.`,
-    error: `[seed:${moduleName}] ${symbols.error} Failed to seed ${moduleName}.`,
-    skip: `[seed:${moduleName}] ${symbols.skip} Skipped seeding for ${moduleName}.`,
+  const actions = {
+    start: `${symbols.start} Starting ${moduleName} seeding...`,
+    success: `${symbols.success} Successfully seeded ${
+      count ?? 'N/A'
+    } ${moduleName.toLowerCase()} entries.`,
+    error: `${symbols.error} Failed to seed ${moduleName}.`,
+    skip: `${symbols.skip} Skipped seeding for ${moduleName}.`,
   };
 
-  if (!messages[action]) {
-    console.log(`[seed:${moduleName}] ⚠️ Unknown log action: ${action}`);
-    return;
-  }
-
-  console.log(messages[action]);
+  const message = actions[action] || `${symbols.info} ${action}`;
+  console.log(`[seed:${moduleName}] ${message}`);
 }

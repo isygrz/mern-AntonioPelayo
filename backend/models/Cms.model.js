@@ -2,6 +2,10 @@ import mongoose from 'mongoose';
 
 const configSchema = new mongoose.Schema(
   {
+    referenceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: false,
+    },
     title: String,
     subtitle: String,
     backgroundImage: String,

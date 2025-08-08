@@ -1,19 +1,22 @@
 export const cmsSections = [
   {
-    route: '/',
-    sections: [
-      {
-        type: 'hero',
-        enabled: true,
-        order: 0,
-        config: {
-          title: 'Discover Artisan Tiles',
-          subtitle: 'Crafted with soul, rooted in tradition',
-          backgroundImage: '/uploads/hero.jpg',
-          ctaText: 'Explore Now',
-          ctaLink: '/products',
-        },
-      },
-    ],
+    type: 'hero',
+    enabled: true,
+    order: 0,
+  },
+  {
+    type: 'promoGrid',
+    enabled: true,
+    order: 1,
+  },
+  {
+    type: 'featuredProduct',
+    enabled: true,
+    order: 2,
+  },
+  {
+    type: 'blogPreview',
+    enabled: true,
+    order: 3,
   },
 ];

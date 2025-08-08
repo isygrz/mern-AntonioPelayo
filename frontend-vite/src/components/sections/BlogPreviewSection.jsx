@@ -1,33 +1,36 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllBlogs } from '../../redux/slices/blogSlice'; // ✅ correct thunk
+import React from 'react';
 
-const BlogPreviewSection = ({ config = {} }) => {
-  const dispatch = useDispatch();
-  const { title = 'Recent Blog Posts', maxItems = 3 } = config;
-  const { blogs = [] } = useSelector((state) => state.blog || {});
+const BlogPreviewSection = ({ config }) => {
+  const blogs = config?.items || [];
 
-  useEffect(() => {
-    if (!blogs.length) {
-      dispatch(fetchAllBlogs());
-    }
-  }, [dispatch, blogs]);
-
-  const recent = blogs.slice(0, maxItems);
-
-  if (!recent.length) return <p>No recent blogs available.</p>; // ✅ temporary fallback
+  if (!blogs.length) return null;
 
   return (
-    <section>
-      <h2>{title}</h2>
-      <ul>
-        {recent.map((blog) => (
-          <li key={blog._id}>
-            <h3>{blog.title}</h3>
-            <p>{blog.snippet || blog.content?.slice(0, 100)}</p>
-          </li>
+    <section className="py-12 px-4 max-w-6xl mx-auto">
+      <h2 className="text-3xl font-bold mb-6 text-center">Latest Articles</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {blogs.map((blog, index) => (
+          <div
+            key={blog._id || index}
+            className="bg-white p-6 border rounded-lg shadow hover:shadow-md transition"
+          >
+            {blog.image && (
+              <img
+                src={blog.image}
+                alt={blog.title}
+                className="mb-4 w-full h-48 object-cover rounded"
+              />
+            )}
+            <h3 className="text-lg font-semibold mb-2">{blog.title}</h3>
+            <a
+              href={`/blog/${blog.slug || blog._id}`}
+              className="text-blue-600 hover:underline"
+            >
+              Read More →
+            </a>
+          </div>
         ))}
-      </ul>
+      </div>
     </section>
   );
 };

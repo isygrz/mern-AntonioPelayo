@@ -12,6 +12,7 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import mobileSessionRoutes from './routes/mobileSessionRoutes.js';
 import cmsRoutes from './routes/cmsRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
+import footerRoutes from './routes/footerRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -40,6 +41,7 @@ app.use('/api/mobile-sessions', mobileSessionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/cms', cmsRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api/footer', footerRoutes);
 
 // Serve static uploads
 const __dirnameFull = path.resolve();

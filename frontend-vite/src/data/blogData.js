@@ -7,7 +7,7 @@ const blogPosts = [
     author: 'Maria L.',
     excerpt:
       'Explore emerging ceramic tile aesthetics and layout styles shaping next year’s interiors.',
-    image: '/images/p2.jpeg',
+    image: 'http://localhost:5000/uploads/p2.jpeg',
     content: `## Warm Minimalism\nThis season we’re seeing tiles that blend...`,
   },
   {
@@ -18,7 +18,7 @@ const blogPosts = [
     author: 'Antonio P.',
     excerpt:
       'A quick guide to outdoor-rated tiles, drainage patterns, and heat-resistant finishes for patios.',
-    image: '/images/p4.jpeg',
+    image: 'http://localhost:5000/uploads/p4.jpeg',
     content: `## Porcelain for Durability\nPorcelain is frost-resistant...`,
   },
 ];

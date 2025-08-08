@@ -1,9 +1,9 @@
 const mockImages = [
-  '/images/p1.jpeg',
-  '/images/p2.jpeg',
-  '/images/p3.jpeg',
-  '/images/p4.jpeg',
-  '/images/p5.jpeg',
+  'http://localhost:5000/uploads/p1.jpeg',
+  'http://localhost:5000/uploads/p2.jpeg',
+  'http://localhost:5000/uploads/p3.jpeg',
+  'http://localhost:5000/uploads/p4.jpeg',
+  'http://localhost:5000/uploads/p5.jpeg',
 ];
 
 const ImagePicker = ({ onSelect, onClose }) => {

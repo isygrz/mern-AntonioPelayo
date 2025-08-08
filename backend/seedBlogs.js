@@ -10,7 +10,7 @@ const blogs = [
     title: 'Welcome to Our Blog',
     slug: 'welcome-blog',
     content: '<p>This is the first blog post!</p>',
-    image: '/uploads/blog1.jpg',
+    image: 'http://localhost:5000/uploads/default.jpeg',
     author: 'Admin',
   },
 ];

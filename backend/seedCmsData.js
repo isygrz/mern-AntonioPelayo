@@ -6,7 +6,7 @@ const cmsData = [
     config: {
       title: 'Welcome to Jalisco Tile',
       subtitle: 'Authentic, handcrafted tiles direct to you.',
-      backgroundImage: '/uploads/hero.jpg',
+      backgroundImage: 'http://localhost:5000/uploads/p1.jpeg',
       ctaText: 'Shop Now',
       ctaLink: '/products',
       items: [],
@@ -20,12 +20,12 @@ const cmsData = [
       items: [
         {
           title: 'Talavera Classics',
-          image: '/uploads/promo1.jpg',
+          image: 'http://localhost:5000/uploads/p2.jpeg',
           link: '/collections/talavera',
         },
         {
           title: 'Geometric Lines',
-          image: '/uploads/promo2.jpg',
+          image: 'http://localhost:5000/uploads/p3.jpeg',
           link: '/collections/geometric',
         },
       ],

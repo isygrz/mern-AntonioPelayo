@@ -1718,3 +1718,223 @@
 - Ran `node seed.js` and confirmed clean output across all modules:
   → Users, Products, Orders, Badges, Heroes, Blogs, Footer, CMS
 - Verified that each seed script runs independently or via the `seed.js` CLI with consistent `logSeed()` output
+
+150. Patched `cms.js` Structure for Dynamic CMS Seeding
+
+- Replaced the previous cmsLayout export with a cmsSections array of { route, sections[] } objects
+- Ensured top-level route is defined ('/') for proper seed matching in `seedCms.js`
+- Confirmed compatibility with sanitizeConfig() and `Cms.model.js` schema
+
+151. Fully Refactored `seedCms.js` for Dynamic Content Injection
+
+- Separated seeding logic into export async function seedCms() to allow clean CLI integration
+- Dynamically injects data from heroes, blogs, products, and static promo tiles
+- Populates sections[] using cmsSections.find(route === '/')
+- Validates against `Cms.model.js` structure and logs outcome using logSeed()
+
+152. Patched seed.js for CLI Flag --cms (re-enabled)
+
+- Added --cms flag to main seed.js CLI runner
+- Calls the named seedCms() function via dynamic import
+- Ensures modular seeding for CMS only (node seed.js --cms)
+
+153. Verified and Repaired `Cms.model.js` Schema
+
+- Confirmed nested structure:
+  → route → sections[] → { type, order, enabled, config }
+- config allows flexible keys: items, title, subtitle, etc.
+- Included full enum for supported section types (e.g. hero, blogPreview, etc.)
+
+154. Implemented Runtime Population in getCmsByRoute()
+
+- Backend controller (`cmsController.js`) injects blog/product data at request time
+- Supports live rendering of featuredProduct and blogPreview sections from DB
+- Safe fallback: if no route found, returns empty array
+
+155. Refactored `logSeed.js` Utility for Generalized Messaging
+
+- Replaced hardcoded messages with dynamic log builder:
+  → Accepts moduleName, message, and optional type (start, success, error, etc.)
+- Symbols mapped for consistency (🌱 ✅ ⚠️ ❌)
+- Eliminates "Unknown log action" warnings and improves legibility
+
+156. Verified HomeScreen Redux Integration and Visual Rendering
+
+- Confirmed `HomeScreen.jsx` dispatches:
+  → fetchCmsByRoute('/'), fetchAllBlogs(), and fetchAllProducts()
+- Verified SectionRenderer receives sections, blogs, and products props
+
+157. Patched All Visual CMS Sections to Handle Missing or Empty Configs
+
+- Updated the following components:
+  → `HeroSection.jsx`, `PromoGridSection.jsx`, `FeaturedProductSection.jsx`, `BlogPreviewSection.jsx`
+- Each gracefully handles undefined or partial config (e.g. no items, missing title)
+- Confirmed visual layout appears on / route without frontend or backend crashes
+
+158. Diagnosed Blank Homepage Issue Despite Populated CMS
+
+- Verified CMS API returned valid sections[] on GET /api/cms?route=/, including multiple section types (hero, promoGrid, etc.)
+- Redux DevTools confirmed payload delivered correctly to frontend
+- However, <SectionRenderer /> was rendering fallback "No CMS sections to display"
+- Confirmed bug stemmed from a frontend-level block before .map() was invoked
+
+159. Refactored SectionRenderer.jsx for Safe Conditional Rendering
+
+- Refactored <SectionRenderer />:
+  → Added defensive checks: Array.isArray(sections) and sections.length > 0
+  → Inserted debug logging to confirm props actually passed from Redux
+  → Verified mapped components appear when section type is recognized
+- Confirmed fix resolved silent failure in rendering logic
+
+160. Debugged Missing Blog and Product Data in CMS Sections
+
+- CMS config.items for blogPreview and featuredProduct were empty
+- Determined that `seedCms.js` did not populate items array correctly
+- Verified products collection and blogs collection contained valid entries, including slug fields
+
+161. Enhanced `Cms.model.js` Schema to Support referenceId
+
+- Added optional referenceId field inside config schema:
+  → `referenceId: String,`
+- Enables fallback dynamic population of section data from related models (e.g., hero config from Hero.js by ID)
+
+162. Regenerated CMS Controller with Auto-Fill Fallback Logic
+
+- getCmsByRoute controller now dynamically populates:
+  → `blogPreview.config.items` with latest 3 published blogs
+  → featuredProduct.config.items with top 3 rated products
+  → hero.config with matching Hero model (via referenceId) or fallback to Hero.findOne()
+- Ensures visual sections render even when seedCMS config is incomplete
+
+163. Regenerated and Patched seedCms.js for Realistic Sample Configs
+
+- `seedCms.js` now:
+  → Populates referenceId for hero from existing heroes
+  → Auto-fills promoGrid.config.items with sample links
+  → Leaves `featuredProduct.config.items` and `blogPreview.config.items` empty to test fallback
+- This decouples seeding from hardcoding actual data while allowing runtime enrichment
+
+164. Regenerated seedHeroes.js and Verified Hero Entries
+
+- Ensured at least one valid Hero exists with:
+  → title, subtitle, backgroundImage, ctaText, ctaLink
+- Used `_id` of seeded hero as referenceId in CMS
+- Verified correct linkage and rendering in HeroSection
+
+165. Regenerated cmsController.js with updateCmsLayout Export
+
+- Previous backend error:
+  → `SyntaxError: The requested module '../controllers/cmsController.js' does not provide an export named 'updateCmsLayout'`
+- Regenerated controller with named export for updateCmsLayout
+- Matched import usage in `cmsRoutes.js`, resolving crash
+
+166. Partial Rendering of CMS Sections on Homepage /
+
+- After implementing:
+  → Fallback injection for featuredProduct items (via top-rated products)
+  → Reference-based hydration for hero config from Hero collection
+  → Safe render checks for `SectionRenderer.jsx` and individual sections
+- Outcome:
+  → CMS layout is no longer blank
+  → PromoGrid and FeaturedProduct sections appear structurally
+  → Images are currently broken (image path or upload issue)
+  → Hero and BlogPreview sections are still not rendering visually
+- Markup loads but with broken or empty media, likely due to:
+  → Missing or incorrect config data from controller
+  → Path errors for /uploads/\*.jpg
+  → Unpopulated blogs or reference mismatch
+
+167. Backend CMS Controller: Filtering, Sorting, and Fallback Hydration
+
+- Refactored getCmsByRoute to:
+  → Only include enabled: true sections
+  → Sort by order field to control visual stacking
+  → Inject fallback content for: hero, featuredProduct, blogPreview
+- Improved developer logs in backend with contextual markers,
+- Added fallback logic for missing images using default upload path
+
+168. Public Image Access from Uploads Directory
+
+- Static uploads folder served from /uploads/ via Express
+- Updated all image references in backend controllers to absolute URLs (e.g., http://localhost:5000/uploads/red.jpeg)
+- Confirmed accessibility of direct image URLs from browser
+- Validated images render properly in frontend using full URL references
+
+169. CMS Admin Editor with Image Upload Support
+
+- Implemented <FieldRenderer /> to support dynamic field types:
+  → Text, textarea, select, toggle, and image uploads
+- Integrated image picker/upload in <AddEditSectionModal />
+- Extended `cmsSchema.js` to support { type: 'image' } fields (e.g., for hero.backgroundImage)
+- Validated updated images sync correctly to Redux + backend
+
+170. Upload Controller + Route for Admin Use
+
+- Created `uploadController.js` with secure POST /api/upload endpoint
+- Enabled multer-based file upload handling to /uploads
+- Registered route via `uploadRoutes.js` and linked in `server.js`
+- Implemented security guardrails to restrict uploads to authorized users (future-proofing for admin-only access)
+
+171. CMS Overview CLI Tool: `printCmsOverview.js`
+
+- Developed a CLI utility to audit current CMS layout data
+- `node scripts/printCmsOverview.js` prints all CMS routes and visual section types with key config summary
+- Used for internal auditing and debugging across layouts (e.g., /, /about, /products, etc.)
+
+172. HomeScreen Fully Redux-Wired and Dynamic
+
+- `HomeScreen.jsx` loads CMS layout via fetchCmsByRoute('/')
+- Confirmed Redux cms.sections[] state is properly populated
+- Connected <SectionRenderer /> to map and render each visual section dynamically based on its type
+
+173. `SectionRenderer.jsx`: Expanded Support for CMS Section Types
+
+- Updated to handle:
+  → hero, promoGrid, featuredProduct, blogPreview
+- Each type routes to a visual component (e.g., HeroSection, PromoGridSection)
+- Safe fallback rendering when config is empty or undefined
+
+174. 🛠 Verified Backend CMS Layout Data Integrity
+
+- Added sort+filter logic in backend controller (enabled: true, sorted by order)
+- Confirmed MongoDB CMS records are structured with proper:
+  → route, type, order, enabled, and config
+- Verified layout hydration and fallback logic triggers appropriately
+
+175. Added Backend CMS Controller Filtering & Sorting
+
+- Implemented getCmsByRoute update to ensure backend always:
+  → Returns only sections with enabled: true
+  → Sorts sections by order ascending before sending to client
+- Benefit: Admin layout order in DB now directly determines homepage render order, avoiding frontend-only sort/filter reliance
+
+176. Implemented Hydrated CMS CLI Overview Tool
+
+- Created `printCmsOverview.js` in backend/scripts to list all CMS routes & sections
+- Hydrates data to match API response:
+  → Hero: pulls heading/subheading/image/cta from Hero collection
+  → FeaturedProduct: auto-fills from top-rated products if empty
+  → BlogPreview: auto-fills from latest blogs if empty
+  → PromoGrid: normalizes all images with base URL
+- Output mirrors /api/cms?route=… structure for admin/developer verification
+
+177. Integrated CMS Overview into Seeder Script
+
+- Updated `seed.js` to accept --cms:overview flag
+- Allows running: `node seed.js --cms:overview`
+  → Without reseeding data, purely for inspection
+- Benefits: Centralizes CMS debugging into existing seed workflow
+
+178. Verified API & CLI CMS Data Parity
+
+- Cross-checked /api/cms?route=/ JSON with `node seed.js --cms:overview` CLI output
+- Fixed mismatch where CLI was printing (no title) for hydrated fields
+- CLI now matches live API results exactly, including hero titles, promoGrid item counts, and blog/product fallbacks
+
+179. Logging Behavior Review for Production Readiness
+
+- Observed repeated [cms] Hero image: logs in dev environment
+- Cause: Multiple fetches due to React dev reload & image preloads
+- Decision:
+  → Keep log in dev for hydration debugging
+  → Silence or downgrade to debug-level in production for cleaner logs
