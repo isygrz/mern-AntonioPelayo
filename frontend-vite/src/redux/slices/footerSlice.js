@@ -5,11 +5,12 @@ export const fetchFooter = createAsyncThunk(
   'footer/fetchFooter',
   async (_, thunkAPI) => {
     try {
-      const { data } = await axios.get('/api/footer');
+      // axios baseURL already includes /api, so do NOT prefix with /api here
+      const { data } = await axios.get('/footer');
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+        err?.response?.data?.message || err.message || 'Failed to load footer'
       );
     }
   }
@@ -23,6 +24,7 @@ const footerSlice = createSlice({
     builder
       .addCase(fetchFooter.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchFooter.fulfilled, (state, action) => {
         state.loading = false;

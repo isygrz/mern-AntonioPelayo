@@ -1938,3 +1938,64 @@
 - Decision:
   → Keep log in dev for hydration debugging
   → Silence or downgrade to debug-level in production for cleaner logs
+
+180. Patched CMS API to Serve Absolute Image URLs for All Section Types
+
+- Updated `cmsController.js` to detect relative /uploads/... paths in config.items[].image and prepend the correct assetBaseUrl.
+- Applied to all CMS section types, including:
+  → hero (backgroundImage)
+  → promoGrid (items)
+  → featuredProduct (items)
+  → blogPreview (items)
+- Verified /api/cms?route=/ JSON now returns fully qualified URLs for all images.
+- Result: Images load correctly from /uploads without relying on relative paths.
+
+181. Backend Health Check Endpoint Enhancement
+
+- Added /api/health endpoint to return:
+  → status, nodeEnv, assetBaseUrl, and frontendOrigin.
+- Confirmed correct asset base URL in development (http://localhost:5000).
+- Used for quick validation of static file serving and API health.
+
+182. Fixed Product and Blog Routing from CMS Sections
+
+- Investigated issue where featuredProduct and blogPreview CMS items linked to products/undefined or blog/undefined.
+- Root cause: Slug field missing in CMS config items.
+- Solution:
+  → Verified product and blog fetch thunks use /api/products/slug/:slug and /api/blogs/slug/:slug.
+  → Ensured CMS seeding scripts (`seedProducts.js`, `seedBlogs.js`) correctly populate slug fields for all demo products and blogs.
+  → Updated CMS config in seed data to use proper slugs.
+- Verified clicking product/blog cards on `/` now routes to correct detail pages.
+
+183. Updated `productRoutes.js` and `blogRoutes.js` to Include Slug Endpoints
+
+- Added GET /slug/:slug to both routes, using controllers to:
+  → Find document by slug
+  → Return 404 if not found
+- Preserved all existing admin CRUD endpoints.
+- Verified via Postman:
+  → /api/products/slug/talavera-azul returns correct product JSON
+  → /api/blogs/slug/behind-the-craft returns correct blog JSON.
+
+184. Controller Adjustments for Slug Queries
+
+- `productController.js` and `blogController.js` updated to include getProductBySlug and getBlogBySlug.
+- Each uses findOne({ slug }) for clean querying.
+- Returns consistent 404 JSON format when not found.
+- Logging refined for dev-only verbosity.
+
+185. Seed Data Alignment for CMS Routing
+
+- `seedBlogs.js` adjusted to ensure seeded blogs:
+  → Always have a valid slug
+  → Contain image paths stored in /uploads
+- Synced blog titles, slugs, and CMS config links to match each other.
+- Similar validation done for seeded products in `seedProducts.js`.
+- Verified /api/blogs and /api/products contain items matching /api/cms links.
+
+186. Confirmed End-to-End Routing for Featured Products and Blog Previews
+
+- Visually verified `/` renders featuredProduct and blogPreview sections with clickable cards.
+- Clicking a product routes to /product/:slug with correct details rendered from Redux state.
+- Clicking a blog routes to /blog/:slug with correct post details.
+- No more undefined slugs or 404 errors for seeded demo content.

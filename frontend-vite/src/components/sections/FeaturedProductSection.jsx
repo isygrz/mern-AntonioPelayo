@@ -1,38 +1,51 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 
-const FeaturedProductSection = ({ config }) => {
-  const products = config?.items || [];
+export default function FeaturedProductSection({ config }) {
+  const items = Array.isArray(config?.items) ? config.items : [];
 
-  if (!products.length) return null;
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="py-12 px-4 max-w-7xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6 text-center">Featured Products</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {products.map((product, index) => (
-          <div
-            key={product._id || index}
-            className="bg-white border rounded-lg overflow-hidden shadow hover:shadow-md transition"
-          >
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-64 object-cover"
-            />
-            <div className="p-4 text-center">
-              <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-              <a
-                href={`/product/${product.slug || product._id}`}
-                className="text-blue-600 hover:underline"
-              >
-                View Product →
-              </a>
-            </div>
-          </div>
-        ))}
+    <section className="my-10">
+      <h2 className="text-2xl font-semibold mb-4">Featured Products</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        {items.map((item, idx) => {
+          const href =
+            item?.link || (item?.slug ? `/product/${item.slug}` : '#');
+          if (!item?.link && !item?.slug) {
+            // eslint-disable-next-line no-console
+            console.warn(
+              '[FeaturedProductSection] Missing link/slug for item',
+              item
+            );
+          }
+          return (
+            <Link
+              key={idx}
+              to={href}
+              className="block border rounded-lg overflow-hidden hover:shadow transition"
+            >
+              <div className="aspect-[4/3] bg-slate-100">
+                {item?.image ? (
+                  <img
+                    src={item.image}
+                    alt={item?.title || 'Featured product'}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                ) : null}
+              </div>
+              <div className="p-3">
+                <h3 className="text-sm font-medium">
+                  {item?.title || 'Untitled Product'}
+                </h3>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
-};
-
-export default FeaturedProductSection;
+}

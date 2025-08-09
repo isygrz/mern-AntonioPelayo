@@ -5,11 +5,16 @@ export const fetchCmsByRoute = createAsyncThunk(
   'cms/fetchByRoute',
   async (route, thunkAPI) => {
     try {
-      const { data } = await axios.get(`/api/cms?route=${route}`);
+      // axios baseURL already includes /api
+      const { data } = await axios.get(
+        `/cms?route=${encodeURIComponent(route)}`
+      );
       return data.sections || [];
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
+        error?.response?.data?.message ||
+          error.message ||
+          'Failed to load CMS sections'
       );
     }
   }
@@ -19,11 +24,14 @@ export const updateCmsLayout = createAsyncThunk(
   'cms/updateLayout',
   async ({ route, sections }, thunkAPI) => {
     try {
-      const { data } = await axios.patch(`/api/cms`, { route, sections });
-      return data.sections;
+      const { data } = await axios.patch('/cms', { route, sections });
+      // PATCH returns { message, cms }, so grab cms.sections
+      return data?.cms?.sections || [];
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
+        error?.response?.data?.message ||
+          error.message ||
+          'Failed to update CMS layout'
       );
     }
   }
@@ -58,7 +66,6 @@ const cmsSlice = createSlice({
         state.loading = false;
         state.error = action.payload || 'Failed to load CMS sections';
       })
-
       .addCase(updateCmsLayout.pending, (state) => {
         state.loading = true;
         state.error = null;

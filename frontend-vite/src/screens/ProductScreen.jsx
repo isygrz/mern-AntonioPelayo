@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { addToCart } from '../redux/slices/cartSlice';
-import { fetchProductById } from '../redux/slices/productDetailsSlice';
+import { fetchProductBySlug } from '../redux/slices/productDetailsSlice';
 
 function ProductScreen() {
   const dispatch = useDispatch();
@@ -16,13 +16,12 @@ function ProductScreen() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchProductById(slug));
+    if (slug) dispatch(fetchProductBySlug(slug));
   }, [dispatch, slug]);
 
   useEffect(() => {
-    if (product?.imageGallery) {
-      setSelectedImage(product.imageGallery);
-    }
+    const img = product?.imageGallery || product?.image || '';
+    setSelectedImage(img);
   }, [product]);
 
   if (loading) {
@@ -42,12 +41,14 @@ function ProductScreen() {
       addToCart({
         slug: product.slug,
         name: product.name,
-        image: product.imageGallery,
-        price: product?.pricing?.perBox || 0,
+        image: product.imageGallery || product.image,
+        price: product?.pricing?.perBox || product.pricePerBox || 0,
         qty: quantity,
       })
     );
   };
+
+  const gallery = [product?.imageGallery || product?.image].filter(Boolean);
 
   return (
     <div className="p-6 max-w-screen-xl mx-auto">
@@ -55,11 +56,7 @@ function ProductScreen() {
         {/* LEFT COLUMN - IMAGE GALLERY */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex md:flex-col gap-4">
-            {[
-              product.imageGallery,
-              product.imageGallery,
-              product.imageGallery,
-            ].map((img, i) => (
+            {gallery.map((img, i) => (
               <img
                 key={i}
                 src={img}
@@ -70,11 +67,15 @@ function ProductScreen() {
             ))}
           </div>
           <div className="flex-1">
-            <img
-              src={selectedImage}
-              alt={product.name}
-              className="w-full h-auto object-cover border"
-            />
+            {selectedImage ? (
+              <img
+                src={selectedImage}
+                alt={product.name}
+                className="w-full h-auto object-cover border"
+              />
+            ) : (
+              <div className="w-full aspect-[4/3] bg-slate-100 border" />
+            )}
           </div>
         </div>
 
@@ -86,23 +87,14 @@ function ProductScreen() {
           </div>
 
           <div className="text-2xl font-bold text-gray-800">
-            ${product?.pricing?.perBox?.toFixed(2) || '—'}/box
+            $
+            {product?.pricing?.perBox?.toFixed(2) ||
+              product?.pricePerBox?.toFixed?.(2) ||
+              '—'}
+            /box
           </div>
           <div className="text-sm text-gray-500">
             ${product?.pricing?.perSqFt?.toFixed(2) || '—'}/sq. ft.
-          </div>
-
-          {/* Color Picker Mockup */}
-          <div>
-            <div className="text-sm font-semibold mb-1">Color</div>
-            <div className="flex gap-3">
-              <div className="w-10 h-10 rounded border cursor-pointer flex items-center justify-center">
-                <div className="w-6 h-6 bg-gray-300 rounded" title="Blanco" />
-              </div>
-              <div className="w-10 h-10 rounded border cursor-pointer flex items-center justify-center">
-                <div className="w-6 h-6 bg-black rounded" title="Negro" />
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-2 mt-4">

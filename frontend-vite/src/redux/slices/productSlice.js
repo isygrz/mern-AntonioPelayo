@@ -5,7 +5,8 @@ import axiosInstance from '../../utils/axiosInstance';
 export const fetchAllProducts = createAsyncThunk(
   'products/fetchAll',
   async () => {
-    const { data } = await axiosInstance.get('/api/products');
+    // axiosInstance baseURL already has /api
+    const { data } = await axiosInstance.get('/products');
     return data;
   }
 );
@@ -14,7 +15,7 @@ export const fetchAllProducts = createAsyncThunk(
 export const getProductById = createAsyncThunk(
   'products/getById',
   async (id) => {
-    const { data } = await axiosInstance.get(`/api/products/${id}`);
+    const { data } = await axiosInstance.get(`/products/${id}`);
     return data;
   }
 );
@@ -23,7 +24,7 @@ export const getProductById = createAsyncThunk(
 export const createProduct = createAsyncThunk(
   'products/create',
   async (newProduct) => {
-    const { data } = await axiosInstance.post('/api/products', newProduct);
+    const { data } = await axiosInstance.post('/products', newProduct);
     return data;
   }
 );
@@ -32,17 +33,14 @@ export const createProduct = createAsyncThunk(
 export const updateProduct = createAsyncThunk(
   'products/update',
   async ({ id, updatedProduct }) => {
-    const { data } = await axiosInstance.put(
-      `/api/products/${id}`,
-      updatedProduct
-    );
+    const { data } = await axiosInstance.put(`/products/${id}`, updatedProduct);
     return data;
   }
 );
 
 // ✅ Delete a product
 export const deleteProduct = createAsyncThunk('products/delete', async (id) => {
-  await axiosInstance.delete(`/api/products/${id}`);
+  await axiosInstance.delete(`/products/${id}`);
   return id;
 });
 

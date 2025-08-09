@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../utils/axiosInstance';
 
 export const fetchAllBlogs = createAsyncThunk('blogs/fetchAll', async () => {
-  const { data } = await axiosInstance.get('/api/blogs');
+  // axiosInstance baseURL already has /api
+  const { data } = await axiosInstance.get('/blogs');
   return data;
 });
 
