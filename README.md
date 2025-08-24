@@ -1941,61 +1941,223 @@
 
 180. Patched CMS API to Serve Absolute Image URLs for All Section Types
 
-- Updated `cmsController.js` to detect relative /uploads/... paths in config.items[].image and prepend the correct assetBaseUrl.
+- Updated `cmsController.js` to detect relative /uploads/... paths in config.items[].image and prepend the correct assetBaseUrl
 - Applied to all CMS section types, including:
   → hero (backgroundImage)
   → promoGrid (items)
   → featuredProduct (items)
   → blogPreview (items)
-- Verified /api/cms?route=/ JSON now returns fully qualified URLs for all images.
-- Result: Images load correctly from /uploads without relying on relative paths.
+- Verified /api/cms?route=/ JSON now returns fully qualified URLs for all images
+- Result: Images load correctly from /uploads without relying on relative paths
 
 181. Backend Health Check Endpoint Enhancement
 
 - Added /api/health endpoint to return:
-  → status, nodeEnv, assetBaseUrl, and frontendOrigin.
-- Confirmed correct asset base URL in development (http://localhost:5000).
-- Used for quick validation of static file serving and API health.
+  → status, nodeEnv, assetBaseUrl, and frontendOrigin
+- Confirmed correct asset base URL in development (http://localhost:5000)
+- Used for quick validation of static file serving and API health
 
 182. Fixed Product and Blog Routing from CMS Sections
 
-- Investigated issue where featuredProduct and blogPreview CMS items linked to products/undefined or blog/undefined.
-- Root cause: Slug field missing in CMS config items.
+- Investigated issue where featuredProduct and blogPreview CMS items linked to products/undefined or blog/undefined
+- Root cause: Slug field missing in CMS config items
 - Solution:
-  → Verified product and blog fetch thunks use /api/products/slug/:slug and /api/blogs/slug/:slug.
-  → Ensured CMS seeding scripts (`seedProducts.js`, `seedBlogs.js`) correctly populate slug fields for all demo products and blogs.
-  → Updated CMS config in seed data to use proper slugs.
-- Verified clicking product/blog cards on `/` now routes to correct detail pages.
+  → Verified product and blog fetch thunks use /api/products/slug/:slug and /api/blogs/slug/:slug
+  → Ensured CMS seeding scripts (`seedProducts.js`, `seedBlogs.js`) correctly populate slug fields for all demo products and blogs
+  → Updated CMS config in seed data to use proper slugs
+- Verified clicking product/blog cards on `/` now routes to correct detail pages
 
 183. Updated `productRoutes.js` and `blogRoutes.js` to Include Slug Endpoints
 
 - Added GET /slug/:slug to both routes, using controllers to:
   → Find document by slug
   → Return 404 if not found
-- Preserved all existing admin CRUD endpoints.
+- Preserved all existing admin CRUD endpoints
 - Verified via Postman:
   → /api/products/slug/talavera-azul returns correct product JSON
-  → /api/blogs/slug/behind-the-craft returns correct blog JSON.
+  → /api/blogs/slug/behind-the-craft returns correct blog JSON
 
 184. Controller Adjustments for Slug Queries
 
-- `productController.js` and `blogController.js` updated to include getProductBySlug and getBlogBySlug.
-- Each uses findOne({ slug }) for clean querying.
-- Returns consistent 404 JSON format when not found.
-- Logging refined for dev-only verbosity.
+- `productController.js` and `blogController.js` updated to include getProductBySlug and getBlogBySlug
+- Each uses findOne({ slug }) for clean querying
+- Returns consistent 404 JSON format when not found
+- Logging refined for dev-only verbosity
 
 185. Seed Data Alignment for CMS Routing
 
 - `seedBlogs.js` adjusted to ensure seeded blogs:
   → Always have a valid slug
   → Contain image paths stored in /uploads
-- Synced blog titles, slugs, and CMS config links to match each other.
-- Similar validation done for seeded products in `seedProducts.js`.
-- Verified /api/blogs and /api/products contain items matching /api/cms links.
+- Synced blog titles, slugs, and CMS config links to match each other
+- Similar validation done for seeded products in `seedProducts.js`
+- Verified /api/blogs and /api/products contain items matching /api/cms links
 
 186. Confirmed End-to-End Routing for Featured Products and Blog Previews
 
-- Visually verified `/` renders featuredProduct and blogPreview sections with clickable cards.
-- Clicking a product routes to /product/:slug with correct details rendered from Redux state.
-- Clicking a blog routes to /blog/:slug with correct post details.
-- No more undefined slugs or 404 errors for seeded demo content.
+- Visually verified `/` renders featuredProduct and blogPreview sections with clickable cards
+- Clicking a product routes to /product/:slug with correct details rendered from Redux state
+- Clicking a blog routes to /blog/:slug with correct post details
+- No more undefined slugs or 404 errors for seeded demo content
+
+187. Implemented Client-Only Search with Typeahead & Results Screen
+
+- Added `SearchSuggest.jsx` for desktop header search with live typeahead
+  → Pulls from Redux product state, filters client-side, and links directly to product pages
+- Added mobile-friendly fallback search field in `Header.jsx`
+- Created `SearchResultsScreen.jsx` for /search route
+  → Filters all products in Redux by name, SKU, tags, or description
+  → Shows results grid with images, titles, and prices
+  → No-query state shows prompt, empty results shows “No results found.”
+- Introduced optional `searchSlice.js` to store last query and result count for potential future UX features
+- Patched `store.js` to register search slice reducer
+
+188. Patched `Header.jsx` to Integrate Search
+
+- Wired <SearchSuggest /> into the desktop header navigation
+- Added controlled input + submit handler for mobile search, routing to /search?q=....
+- On submit, dispatches setQuery() and navigates to results screen
+- Preserved role-based account dropdown and existing cart button
+
+189. Public & Authenticated Contact Form Support
+
+- Created `ContactScreen.jsx` for guest users to send messages without authentication
+  → Posts to new backend endpoint POST /api/inbox/public
+  → Captures name, email, subject, message and displays success/error states
+- Updated `InboxMessage.js` model:
+  → Made fromUser optional
+  → Added meta object (name, email, isGuest) for guest context
+  → Extended source enum to include public and account
+- Updated `inboxController.js`:
+  → Added createPublicInboxMessage for guest submissions
+  → Adjusted createInboxMessage to set source: 'account' and mark meta.isGuest = false
+- Updated `inboxRoutes.js`:
+  → Added /public endpoint (no auth)
+  → Preserved / POST (protected) and GET (admin)
+
+190. Added Backend Slug Utilities & Integrated into Product/Blog Controllers
+
+- Created `slug.js` with:
+  → createSlug(title) — normalized kebab-case slug from string
+  → ensureUniqueSlug(Model, baseSlug, ignoreId?) — guarantees uniqueness in collection, appends -1, -2 if needed
+- Refactored `productController.js`:
+  → On create, generates unique slug from name (or provided slug)
+  → On update, regenerates slug if name changes or slug missing; ensures uniqueness
+- Refactored `blogController.js` similarly to product logic
+- Verified both Product and Blog models already have slug unique constraints
+
+191. Mounted Inbox Routes and Added Health Pings
+
+Updated `server.js`:
+→ Imported and mounted inboxRoutes at /api/inbox
+→ Preserved existing CORS, JSON, cookie parsing, and static uploads config
+
+- Added GET /api/inbox/health in `inboxRoutes.js` for quick service check (returns { ok: true, service: 'inbox', ts: ... })
+- Confirmed /api/inbox/public and /api/inbox/ endpoints are now reachable in development
+
+192. Footer Link Behavior Adjustment
+
+- Updated `Footer.jsx`:
+  → Internal links still use <Link> for SPA navigation
+  → External links now open in same tab per requirement (removed target="\_blank")
+  → Fallback slugify label if no URL provided
+
+193. Unified Admin Tool Access Under /my-account
+
+- Replaced routing logic that previously redirected admin menu tiles (Products, Blogs, Heroes, Badges, Settings, Uploads, User Approvals) to /admin/\* paths
+- Updated sidebar and route handling so all admin-capable tools render inside /my-account/\* routes instead:
+  → /my-account/products
+  → /my-account/blogs
+  → /my-account/heroes
+  → /my-account/badges
+  → /my-account/settings
+  → /my-account/uploads
+  → /my-account/approvals (admin approvals view)
+- Ensured that components conditionally render based on user role/permissions, avoiding blank screens when a non-admin tries to access restricted tools
+
+194. Sidebar Behavior Normalization Across Account Tools
+
+- Refactored MyAccountDashboard.jsx sidebar rendering so the list of tiles dynamically adjusts based on permissions without switching to a separate "Admin Console" context
+- Eliminated duplicate layouts:
+  → Now a single consistent sidebar UI for all /my-account/\* pages
+- Preserved existing tile ordering but grouped tools under "Admin — My Account" and "Admin — Site Console" headings for clarity
+
+195. Permissions-Based Tile Visibility
+
+- Integrated role checks into sidebar generation so only applicable tiles display:
+  → Non-admin users: See personal tools only
+  → Admin users: See both personal tools and site-wide console tools
+- Avoided client-side blank render errors by only linking to routes where Redux store slices are available
+- Added safety checks on useSelector calls in pages like Products, Blogs, Heroes, Badges to prevent crashes from undefined state
+
+196. Prevented Redundant Dashboard Switching
+
+- Removed logic that caused /my-account/dashboard to switch to an entirely different /admin/dashboard layout for admins
+- All dashboard views now remain under /my-account/dashboard while still showing admin-specific widgets where applicable
+
+197. UX Continuity for Admin Tools
+
+- Clicking any admin tool tile from /my-account/dashboard keeps users in the /my-account context (no full-page reloads)
+- Preserves SPA routing, improves perceived performance and task continuity
+
+199. Health Endpoints for Ops Checks
+
+- GET /api/health → { ok: true } confirms server boot and middleware pipeline
+- GET /api/health/db → { db: { readyState, connected } } confirms active Mongo connection
+- Use these in monitors or when debugging 500s/blank screens
+
+200. Verbose, Awaited DB Connector
+
+- `db.js` now uses mongoose.connect with serverSelectionTimeoutMS and logs:
+  → Host, db name, and readyState on success
+  → Clear error with exit(1) on failure
+- `server.js` awaits connectDB() before mounting routes to prevent route handlers from queuing and timing out
+
+201. Stable Route Mounting (Path-to-RegExp Safe)
+
+- All routes mounted with static string paths only (e.g., /api/cms, /api/footer)
+- No dynamic or full-URL mounts in app.use(); avoids path-to-regexp “Missing parameter name” crashes
+- Centralized mounts in `server.js`, each route module exports router via express.Router()
+
+202. CORS + Cookies Aligned
+
+- cors({ origin: FRONTEND_ORIGIN, credentials: true, methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS' })
+- Client axios instance sets withCredentials: true, ensuring cookie/JWT flows work consistently
+- Added OPTIONS handling for smoother preflights
+
+203. Footer API & Admin Screen
+
+- GET /api/footer returns { links, updatedAt }
+- PUT /api/footer (admin-only) persists new link arrays; Redux slice saveFooter() handles save state
+- UI at /my-account/settings/footer enables add/remove/edit with validation and toasts
+
+204. Auth Middleware: Cookie or Bearer
+
+- authMiddleware.protect now accepts Authorization: Bearer <token> or Cookie: jwt=...
+- Simplifies CLI smoke tests and programmatic admin tools
+
+205. CMS Controller Hardened
+
+- GET /api/cms?route=/ returns an array of sections; controller sanitizes route and guards missing docs
+- Structured 200/404/500 responses with safeJson helper, improving client error handling
+
+206. Axios Client Hardening
+
+- `axiosInstance.js` centralizes baseURL, withCredentials, and 401 handling (optional refresh hook later)
+- Prevents CORS regressions and standardizes headers
+
+207. Network Diagnostics & Zero-Cache Option
+
+- To avoid confusing 304s during debugging, dev server can add Cache-Control: no-store on certain endpoints
+- For production, keep reasonable caching (or short TTL + ETag) for performance
+
+208. Guarded Dynamic Mount Strategy (Docs)
+
+- In case dynamic mounts are reintroduced, use a guard wrapper that rejects non-/api/<segment> paths and refuses full URLs
+- This prevents path-to-regexp parsing errors and SSRF-like mount misuse
+
+208. Health-First Triage Procedure (Docs)
+
+- When the app “loads but shows nothing,” first hit /api/health and /api/health/db
+- If DB not connected: check .env, Atlas IP allowlist, or local mongod
+- If connected but API 404s: verify mounts in server.js

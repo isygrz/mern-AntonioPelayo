@@ -14,6 +14,9 @@ import { updateCmsLayout } from './redux/slices/cmsSlice.js';
 // ✅ Moved to its own file
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
+// ✅ Toasts
+import { ToastProvider } from '@/components/ui/ToastProvider.jsx';
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
@@ -21,7 +24,9 @@ root.render(
     <Provider store={store}>
       <BrowserRouter>
         <ErrorBoundary>
-          <App />
+          <ToastProvider position="top-right">
+            <App />
+          </ToastProvider>
         </ErrorBoundary>
       </BrowserRouter>
     </Provider>

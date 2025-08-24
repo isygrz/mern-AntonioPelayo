@@ -1,11 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '@/utils/axiosInstance';
 
+/**
+ * CMS slice
+ * - fetchCmsByRoute(): loads sections for a route
+ * - updateCmsLayout(): persists updated sections order/config
+ */
+
 export const fetchCmsByRoute = createAsyncThunk(
   'cms/fetchByRoute',
   async (route, thunkAPI) => {
     try {
-      // axios baseURL already includes /api
       const { data } = await axios.get(
         `/cms?route=${encodeURIComponent(route)}`
       );
@@ -25,7 +30,6 @@ export const updateCmsLayout = createAsyncThunk(
   async ({ route, sections }, thunkAPI) => {
     try {
       const { data } = await axios.patch('/cms', { route, sections });
-      // PATCH returns { message, cms }, so grab cms.sections
       return data?.cms?.sections || [];
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -82,6 +86,12 @@ const cmsSlice = createSlice({
       });
   },
 });
+
+// Selectors
+export const selectCmsSections = (s) => s.cms?.sections || [];
+export const selectCmsLoading = (s) => !!s.cms?.loading;
+export const selectCmsError = (s) => s.cms?.error || null;
+export const selectCmsUpdateSuccess = (s) => !!s.cms?.updateSuccess;
 
 export const { resetCmsStatus } = cmsSlice.actions;
 export default cmsSlice.reducer;

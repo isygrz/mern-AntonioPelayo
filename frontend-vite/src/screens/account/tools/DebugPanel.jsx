@@ -1,54 +1,202 @@
-import React from 'react';
 import { useSelector } from 'react-redux';
+import axios from '@/utils/axiosInstance';
+import { useState } from 'react';
+import { useToast } from '@/components/ui/ToastProvider';
 
-const DebugPanel = () => {
-  const auth = useSelector((state) => state.auth);
-  const users = useSelector((state) => state.users);
-  const products = useSelector((state) => state.products);
-  const cms = useSelector((state) => state.cms);
+/**
+ * DebugPanel
+ * - Logs Redux state
+ * - Auth status check
+ * - Inbox smoke tests (health, public, account)
+ *   NOTE: Keep this page behind /my-account/debug and role-protect in production.
+ */
+export default function DebugPanel() {
+  const state = useSelector((s) => s);
+  const toast = useToast();
 
-  const logState = () => {
-    console.log(
-      '%c🧠 Redux State Snapshot:',
-      'color: cyan; font-weight: bold;'
-    );
-    console.log({ auth, users, products, cms });
+  const [publicForm, setPublicForm] = useState({
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    subject: 'Hello from public form',
+    message: 'This is a public test message from DebugPanel.',
+  });
+
+  const [accountForm, setAccountForm] = useState({
+    subject: 'Hello from account',
+    message: 'This is an authenticated test message from DebugPanel.',
+  });
+
+  const logRedux = () => {
+    // eslint-disable-next-line no-console
+    console.log('[Redux State]', state);
+    toast.success('Redux state logged to console');
   };
 
-  const checkAuthStatus = () => {
-    console.log('%c🔐 Auth Check:', 'color: lime; font-weight: bold;');
-    console.log({
-      isAuthenticated: !!auth.userInfo,
-      isAdmin: auth.userInfo?.isAdmin,
-      accountType: auth.userInfo?.accountType,
-      approved: auth.userInfo?.approved,
-    });
+  const checkAuth = async () => {
+    try {
+      const { data } = await axios.get('/users/profile');
+      toast.success(`Authed as ${data?.email || 'unknown'}`);
+      // eslint-disable-next-line no-console
+      console.log('[Auth profile]', data);
+    } catch (err) {
+      toast.error('Not authenticated');
+      // eslint-disable-next-line no-console
+      console.error('[Auth profile error]', err);
+    }
+  };
+
+  const pingInboxHealth = async () => {
+    try {
+      const { data } = await axios.get('/inbox/health');
+      toast.success('Inbox health OK');
+      console.log('[Inbox health]', data);
+    } catch (err) {
+      toast.error('Inbox health failed');
+      console.error('[Inbox health error]', err);
+    }
+  };
+
+  const sendPublicTest = async () => {
+    try {
+      const { data } = await axios.post('/inbox/public', publicForm);
+      toast.success(`Public message sent (#${data?.id || 'ok'})`);
+      console.log('[Public inbox result]', data);
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Public message failed';
+      toast.error(msg);
+      console.error('[Public inbox error]', err);
+    }
+  };
+
+  const sendAccountTest = async () => {
+    try {
+      const { data } = await axios.post('/inbox', accountForm);
+      toast.success(`Account message sent (#${data?.id || 'ok'})`);
+      console.log('[Account inbox result]', data);
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Account message failed';
+      toast.error(msg);
+      console.error('[Account inbox error]', err);
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-8 bg-white shadow-md rounded-lg p-6">
-      <h2 className="text-2xl font-semibold mb-4">🛠 Developer Debug Panel</h2>
-      <p className="text-gray-600 mb-4">
-        Use these tools to inspect Redux state and auth session.
-      </p>
+    <div className="p-4 rounded-xl border bg-white space-y-6">
+      <h1 className="text-xl font-semibold">Debug Panel</h1>
 
-      <div className="flex flex-col gap-3">
+      {/* Basic tools */}
+      <div className="flex gap-2">
         <button
-          onClick={logState}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          onClick={logRedux}
+          className="px-3 py-2 rounded border hover:bg-gray-50"
         >
           Log Redux State
         </button>
-
         <button
-          onClick={checkAuthStatus}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+          onClick={checkAuth}
+          className="px-3 py-2 rounded border hover:bg-gray-50"
         >
           Run Auth Status Check
         </button>
       </div>
+
+      {/* Inbox smoke tests */}
+      <section className="space-y-4">
+        <h2 className="font-semibold">Inbox Smoke Tests</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={pingInboxHealth}
+            className="px-3 py-2 rounded border hover:bg-gray-50"
+          >
+            Ping /api/inbox/health
+          </button>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Public form */}
+          <div className="p-3 rounded border">
+            <h3 className="font-medium mb-2">Public Message</h3>
+            <div className="grid gap-2">
+              <input
+                className="border rounded px-3 py-2"
+                placeholder="Name"
+                value={publicForm.name}
+                onChange={(e) =>
+                  setPublicForm({ ...publicForm, name: e.target.value })
+                }
+              />
+              <input
+                className="border rounded px-3 py-2"
+                placeholder="Email"
+                value={publicForm.email}
+                onChange={(e) =>
+                  setPublicForm({ ...publicForm, email: e.target.value })
+                }
+              />
+              <input
+                className="border rounded px-3 py-2"
+                placeholder="Subject (optional)"
+                value={publicForm.subject}
+                onChange={(e) =>
+                  setPublicForm({ ...publicForm, subject: e.target.value })
+                }
+              />
+              <textarea
+                className="border rounded px-3 py-2"
+                placeholder="Message"
+                rows={4}
+                value={publicForm.message}
+                onChange={(e) =>
+                  setPublicForm({ ...publicForm, message: e.target.value })
+                }
+              />
+              <button
+                onClick={sendPublicTest}
+                className="px-3 py-2 rounded bg-black text-white hover:bg-gray-800"
+              >
+                Send Public Message
+              </button>
+            </div>
+          </div>
+
+          {/* Account form */}
+          <div className="p-3 rounded border">
+            <h3 className="font-medium mb-2">Authenticated Message</h3>
+            <div className="grid gap-2">
+              <input
+                className="border rounded px-3 py-2"
+                placeholder="Subject (optional)"
+                value={accountForm.subject}
+                onChange={(e) =>
+                  setAccountForm({ ...accountForm, subject: e.target.value })
+                }
+              />
+              <textarea
+                className="border rounded px-3 py-2"
+                placeholder="Message"
+                rows={4}
+                value={accountForm.message}
+                onChange={(e) =>
+                  setAccountForm({ ...accountForm, message: e.target.value })
+                }
+              />
+              <button
+                onClick={sendAccountTest}
+                className="px-3 py-2 rounded bg-black text-white hover:bg-gray-800"
+              >
+                Send Account Message
+              </button>
+              <p className="text-xs text-gray-500">
+                Requires authentication (cookie-based).
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p className="text-sm text-gray-600">
+        Open your browser console to see detailed request/response payloads.
+      </p>
     </div>
   );
-};
-
-export default DebugPanel;
+}

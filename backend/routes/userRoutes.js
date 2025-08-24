@@ -1,11 +1,21 @@
 import express from 'express';
-const router = express.Router();
-
 import {
   checkEmailStatus,
-  // (Add registerUser, loginUser, etc. when needed)
+  loginUser,
+  registerUser,
+  getProfile,
 } from '../controllers/userController.js';
 
-router.post('/check-email', checkEmailStatus); // ✅ Route for smart auth flow
+const router = express.Router();
+
+// Smart pre-check (public)
+router.post('/check-email', checkEmailStatus);
+
+// Auth endpoints (public -> set auth cookie)
+router.post('/login', loginUser);
+router.post('/register', registerUser);
+
+// Session/profile (reads cookie)
+router.get('/profile', getProfile);
 
 export default router;

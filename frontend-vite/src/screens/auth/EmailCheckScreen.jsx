@@ -1,29 +1,54 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import { MailCheck } from 'lucide-react';
-import { checkEmailStatus } from '@/redux';
+import axios from '@/utils/axiosInstance';
 import PageWrapper from '../../layouts/PageWrapper';
 
+/**
+ * EmailCheckScreen (VITE_API_BASE-aware)
+ * - axiosInstance uses import.meta.env.VITE_API_BASE which already contains '/api'
+ * - Calls are relative (no '/api' prefix here).
+ * - Handles { exists, role, approved | isApproved } with vendor approval branch.
+ */
 const EmailCheckScreen = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
-      const resultAction = await dispatch(checkEmailStatus(email));
-      const { exists } = resultAction.payload;
+      const { data } = await axios.post('/users/check-email', { email });
+      const exists = !!data?.exists;
+      const role = data?.role || 'personal';
+      // Support both keys: 'approved' (server) and 'isApproved' (older clients)
+      const isApproved =
+        typeof data?.approved === 'boolean'
+          ? data.approved
+          : !!data?.isApproved;
+
       if (exists) {
+        // If vendor exists but not approved yet, route to the waiting screen (project standard)
+        if (role === 'vendor' && isApproved === false) {
+          navigate('/thank-you-awaiting-approval');
+          return;
+        }
+        // Otherwise continue to sign in with email prefilled
         navigate(`/signin?email=${encodeURIComponent(email)}`);
       } else {
-        navigate(`/register/select?email=${encodeURIComponent(email)}`);
+        // New user → choose account type
+        navigate(`/register/account-type?email=${encodeURIComponent(email)}`);
       }
-    } catch {
-      setError('Unable to check email. Please try again.');
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          'Unable to check email. Please try again.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,9 +89,10 @@ const EmailCheckScreen = () => {
 
             <button
               type="submit"
-              className="w-full bg-black text-white font-semibold py-2 rounded-md hover:bg-gray-800 transition"
+              disabled={loading}
+              className="w-full bg-black text-white font-semibold py-2 rounded-md hover:bg-gray-800 transition disabled:opacity-60"
             >
-              Continue
+              {loading ? 'Checking…' : 'Continue'}
             </button>
           </form>
         </div>

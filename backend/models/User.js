@@ -49,8 +49,16 @@ const userSchema = new mongoose.Schema(
     },
     isAdmin: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
+
+// Compatibility virtuals: expose role/isApproved for older code paths
+userSchema.virtual('role').get(function role() {
+  return this.accountType;
+});
+userSchema.virtual('isApproved').get(function isApproved() {
+  return this.approved === true;
+});
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 export default User;

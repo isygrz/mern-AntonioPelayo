@@ -3,6 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '@/redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+/**
+ * SignInScreenSmart
+ * - Prefills email from ?email=
+ * - On successful login, routes to /my-account (unified admin/user hub)
+ */
 const SignInScreenSmart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -17,7 +22,7 @@ const SignInScreenSmart = () => {
   const { userInfo, error } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (userInfo) navigate('/account');
+    if (userInfo) navigate('/my-account');
   }, [userInfo, navigate]);
 
   const handleSubmit = async (e) => {

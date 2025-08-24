@@ -12,6 +12,7 @@ import cmsReducer from './slices/cmsSlice';
 import footerReducer from './slices/footerSlice';
 import usersReducer from './slices/userSlice';
 import vendorProfileReducer from './slices/vendorProfileSlice';
+import searchReducer from './slices/searchSlice'; // NEW
 
 const store = configureStore({
   reducer: {
@@ -27,6 +28,7 @@ const store = configureStore({
     footer: footerReducer,
     users: usersReducer,
     vendorProfile: vendorProfileReducer,
+    search: searchReducer, // NEW
   },
 });
 

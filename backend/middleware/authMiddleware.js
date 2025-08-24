@@ -1,50 +1,63 @@
 import jwt from 'jsonwebtoken';
-import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 
-// Middleware: Requires valid JWT
-const protect = asyncHandler(async (req, res, next) => {
-  const token = req.cookies.jwt;
+/**
+ * Auth middleware (refactored)
+ * - Accepts JWT from either Cookie "jwt" OR Authorization: Bearer <token>
+ * - Keeps existing semantics for admin() and vendor() guards
+ * - Emits 401 on missing/invalid token, 403 on role failures
+ * - Avoids leaking token/verification details in error bodies
+ */
 
-  if (!token) {
-    res.status(401);
-    throw new Error('Not authorized, token missing');
+function extractToken(req) {
+  // Prefer Authorization header for service/CLI calls
+  const auth = req.headers?.authorization || req.headers?.Authorization;
+  if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+    return auth.slice(7).trim();
   }
+  // Fallback: signed cookie issued by the app
+  const cookieToken = req.cookies?.jwt;
+  if (cookieToken) return cookieToken;
 
+  return null;
+}
+
+export const protect = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.userId).select('-password');
+    const token = extractToken(req);
+    if (!token) {
+      res.status(401);
+      throw new Error('Not authorized, token missing');
+    }
 
-    if (!req.user) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // The token payload is expected to carry { userId }
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user) {
       res.status(404);
       throw new Error('User not found');
     }
 
-    next();
+    req.user = user;
+    return next();
   } catch (err) {
-    res.status(401);
-    throw new Error('Not authorized, token failed');
-  }
-});
-
-// Middleware: Admin access only
-const admin = (req, res, next) => {
-  if (req.user?.isAdmin) {
-    next();
-  } else {
-    res.status(403);
-    throw new Error('Admin access required');
+    // Normalize all errors here to a single 401 to avoid information leaks
+    res.status(res.statusCode && res.statusCode !== 200 ? res.statusCode : 401);
+    return next(new Error('Not authorized'));
   }
 };
 
-// Middleware: Approved vendor access only
-const vendor = (req, res, next) => {
-  if (req.user?.role === 'vendor' && req.user?.isApproved) {
-    next();
-  } else {
-    res.status(403);
-    throw new Error('Vendor access only');
-  }
+export const admin = (req, res, next) => {
+  if (req.user?.isAdmin) return next();
+  res.status(403);
+  next(new Error('Admin access required'));
 };
 
-export { protect, admin, vendor };
+export const vendor = (req, res, next) => {
+  // Keep alignment with model fields: accountType + approved
+  if (req.user?.accountType === 'vendor' && req.user?.approved === true) {
+    return next();
+  }
+  res.status(403);
+  next(new Error('Vendor access only'));
+};
