@@ -1,7 +1,8 @@
+import log from '@/utils/logger';
 import { useSelector } from 'react-redux';
 import axios from '@/utils/axiosInstance';
 import { useState } from 'react';
-import { useToast } from '@/components/ui/ToastProvider';
+import { useToast } from '@/components/ui/useToast';
 
 /**
  * DebugPanel
@@ -27,8 +28,7 @@ export default function DebugPanel() {
   });
 
   const logRedux = () => {
-    // eslint-disable-next-line no-console
-    console.log('[Redux State]', state);
+    log.debug('[Redux State]', state);
     toast.success('Redux state logged to console');
   };
 
@@ -36,12 +36,10 @@ export default function DebugPanel() {
     try {
       const { data } = await axios.get('/users/profile');
       toast.success(`Authed as ${data?.email || 'unknown'}`);
-      // eslint-disable-next-line no-console
-      console.log('[Auth profile]', data);
+      log.debug('[Auth profile]', data);
     } catch (err) {
       toast.error('Not authenticated');
-      // eslint-disable-next-line no-console
-      console.error('[Auth profile error]', err);
+      log.error('[Auth profile error]', err);
     }
   };
 
@@ -49,10 +47,10 @@ export default function DebugPanel() {
     try {
       const { data } = await axios.get('/inbox/health');
       toast.success('Inbox health OK');
-      console.log('[Inbox health]', data);
+      log.debug('[Inbox health]', data);
     } catch (err) {
       toast.error('Inbox health failed');
-      console.error('[Inbox health error]', err);
+      log.error('[Inbox health error]', err);
     }
   };
 
@@ -60,11 +58,11 @@ export default function DebugPanel() {
     try {
       const { data } = await axios.post('/inbox/public', publicForm);
       toast.success(`Public message sent (#${data?.id || 'ok'})`);
-      console.log('[Public inbox result]', data);
+      log.debug('[Public inbox result]', data);
     } catch (err) {
       const msg = err?.response?.data?.message || 'Public message failed';
       toast.error(msg);
-      console.error('[Public inbox error]', err);
+      log.error('[Public inbox error]', err);
     }
   };
 
@@ -72,11 +70,11 @@ export default function DebugPanel() {
     try {
       const { data } = await axios.post('/inbox', accountForm);
       toast.success(`Account message sent (#${data?.id || 'ok'})`);
-      console.log('[Account inbox result]', data);
+      log.debug('[Account inbox result]', data);
     } catch (err) {
       const msg = err?.response?.data?.message || 'Account message failed';
       toast.error(msg);
-      console.error('[Account inbox error]', err);
+      log.error('[Account inbox error]', err);
     }
   };
 

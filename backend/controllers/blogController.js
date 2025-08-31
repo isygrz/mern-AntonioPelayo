@@ -2,15 +2,24 @@ import Blog from '../models/Blog.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 import { createSlug, ensureUniqueSlug } from '../utils/slug.js';
 
-// @desc Fetch all blogs
+/**
+ * @desc Fetch all blogs
+ * @route GET /api/blogs
+ * @access Public
+ */
 export const getAllBlogs = asyncHandler(async (_req, res) => {
   const blogs = await Blog.find({});
   res.json(blogs);
 });
 
-// @desc Fetch single blog by slug
+/**
+ * @desc Fetch single blog by slug
+ * @route GET /api/blogs/slug/:slug
+ * @access Public
+ */
 export const getBlogBySlug = asyncHandler(async (req, res) => {
-  const blog = await Blog.findOne({ slug: req.params.slug });
+  const slug = String(req.params.slug || '').trim();
+  const blog = await Blog.findOne({ slug });
   if (!blog) {
     res.status(404);
     throw new Error('Blog post not found');
@@ -18,10 +27,15 @@ export const getBlogBySlug = asyncHandler(async (req, res) => {
   res.json(blog);
 });
 
-// @desc Create a new blog
+/**
+ * @desc Create a new blog
+ * @route POST /api/blogs
+ * @access Admin
+ */
 export const createBlog = asyncHandler(async (req, res) => {
-  const title = req.body?.title || 'New Post';
-  const baseSlug = createSlug(req.body?.slug || title);
+  const title = String(req.body?.title || 'New Post').trim();
+  const incomingSlug = req.body?.slug ? String(req.body.slug).trim() : null;
+  const baseSlug = createSlug(incomingSlug || title);
   const uniqueSlug = await ensureUniqueSlug(Blog, baseSlug);
 
   const blog = new Blog({
@@ -30,7 +44,11 @@ export const createBlog = asyncHandler(async (req, res) => {
     image: req.body?.image || '',
     content: req.body?.content || '',
     excerpt: req.body?.excerpt || '',
-    tags: req.body?.tags || [],
+    tags: Array.isArray(req.body?.tags)
+      ? req.body.tags
+      : req.body?.tags
+      ? [req.body.tags]
+      : [],
     published: !!req.body?.published,
     author: req.user?.name || 'Admin',
   });
@@ -39,7 +57,11 @@ export const createBlog = asyncHandler(async (req, res) => {
   res.status(201).json(created);
 });
 
-// @desc Update blog
+/**
+ * @desc Update blog
+ * @route PUT /api/blogs/:id
+ * @access Admin
+ */
 export const updateBlog = asyncHandler(async (req, res) => {
   const blog = await Blog.findById(req.params.id);
   if (!blog) {
@@ -48,22 +70,33 @@ export const updateBlog = asyncHandler(async (req, res) => {
   }
 
   const prevTitle = blog.title;
-  const nextTitle = req.body?.title ?? blog.title;
-  const incomingSlug = req.body?.slug;
+  const nextTitle =
+    typeof req.body?.title === 'string' ? req.body.title.trim() : blog.title;
+  const incomingSlugRaw =
+    typeof req.body?.slug === 'string' ? req.body.slug.trim() : undefined;
 
   blog.title = nextTitle;
   blog.image = req.body?.image ?? blog.image;
   blog.content = req.body?.content ?? blog.content;
   blog.excerpt = req.body?.excerpt ?? blog.excerpt;
-  blog.tags = req.body?.tags ?? blog.tags;
-  blog.published =
-    typeof req.body?.published !== 'undefined'
-      ? !!req.body.published
-      : blog.published;
+  blog.tags = Array.isArray(req.body?.tags)
+    ? req.body.tags
+    : req.body?.tags
+    ? [req.body.tags]
+    : blog.tags;
+  if (typeof req.body?.published !== 'undefined') {
+    blog.published = !!req.body.published;
+  }
 
-  if (incomingSlug) {
-    const base = createSlug(incomingSlug);
-    blog.slug = await ensureUniqueSlug(Blog, base, blog._id);
+  // Slug rules mirror product controller
+  if (incomingSlugRaw !== undefined) {
+    if (incomingSlugRaw === '') {
+      const base = createSlug(nextTitle);
+      blog.slug = await ensureUniqueSlug(Blog, base, blog._id);
+    } else {
+      const base = createSlug(incomingSlugRaw);
+      blog.slug = await ensureUniqueSlug(Blog, base, blog._id);
+    }
   } else if (!blog.slug || nextTitle !== prevTitle) {
     const base = createSlug(nextTitle);
     blog.slug = await ensureUniqueSlug(Blog, base, blog._id);
@@ -73,7 +106,11 @@ export const updateBlog = asyncHandler(async (req, res) => {
   res.json(updated);
 });
 
-// @desc Delete blog
+/**
+ * @desc Delete blog
+ * @route DELETE /api/blogs/:id
+ * @access Admin
+ */
 export const deleteBlog = asyncHandler(async (req, res) => {
   const blog = await Blog.findById(req.params.id);
   if (!blog) {

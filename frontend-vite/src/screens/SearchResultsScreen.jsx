@@ -4,13 +4,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setQuery, setLastResultsCount } from '@/redux/slices/searchSlice';
 import { fetchAllProducts } from '@/redux/slices/productSlice';
 
-/**
- * SearchResultsScreen
- * - Client-only filtering against products in Redux
- * - Updates optional searchSlice: query + lastResultsCount
- * - Optional hardening: auto-fetch products if none are loaded yet
- */
+// Stable empty array to avoid new reference on each render
+const EMPTY = Object.freeze([]);
 
+/**
+ * SearchResultsScreen (lint-fix)
+ * - Removes logical fallback that confused deps: selector returns a STABLE EMPTY
+ * - Keeps result filtering and optional auto-fetch behavior
+ */
 const pickProductsFromState = (state) => {
   const candidates = [
     state.products?.items,
@@ -22,7 +23,7 @@ const pickProductsFromState = (state) => {
   ].filter(Boolean);
   if (candidates.length > 0) return candidates[0];
   if (state.products?.entities) return Object.values(state.products.entities);
-  return [];
+  return EMPTY;
 };
 
 const useQueryString = () => new URLSearchParams(useLocation().search);
@@ -32,10 +33,10 @@ const SearchResultsScreen = () => {
   const dispatch = useDispatch();
   const qRaw = useQueryString().get('q');
   const q = normalize(qRaw);
-  const allProducts = useSelector(pickProductsFromState) || [];
+  const allProducts = useSelector(pickProductsFromState);
 
   const results = useMemo(() => {
-    if (!q) return [];
+    if (!q) return EMPTY;
     return allProducts.filter((p) => {
       const name = normalize(p?.name || p?.title);
       const sku = normalize(p?.sku);

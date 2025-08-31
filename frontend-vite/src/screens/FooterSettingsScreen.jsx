@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { fetchFooter, updateFooterLinks } from '@/api/footerApi';
 
+/**
+ * FooterSettingsScreen (lint-fix)
+ * - No unused handler params
+ * - Defensive defaults
+ * - Minimal UX polish on error/saving states
+ */
 export default function FooterSettingsScreen() {
   const [links, setLinks] = useState([{ label: '', url: '' }]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +24,7 @@ export default function FooterSettingsScreen() {
           setLinks(data?.links?.length ? data.links : [{ label: '', url: '' }]);
           setUpdatedAt(data?.updatedAt || '');
         }
-      } catch (e) {
+      } catch {
         if (!ignore) setError('Failed to load footer');
       } finally {
         if (!ignore) setLoading(false);
@@ -53,7 +59,7 @@ export default function FooterSettingsScreen() {
       setLinks(data.links || []);
       setUpdatedAt(data.updatedAt || '');
       alert('Saved footer links.');
-    } catch (e) {
+    } catch {
       setError('Failed to save footer');
     } finally {
       setSaving(false);
@@ -87,6 +93,7 @@ export default function FooterSettingsScreen() {
               onChange={(e) => onChange(idx, 'url', e.target.value)}
             />
             <button
+              type="button"
               className="col-span-1 border rounded px-2 py-1 hover:bg-gray-50"
               onClick={() => removeRow(idx)}
               title="Remove"
@@ -98,10 +105,15 @@ export default function FooterSettingsScreen() {
       </div>
 
       <div className="mt-4 flex gap-2">
-        <button className="border rounded px-3 py-1" onClick={addRow}>
+        <button
+          type="button"
+          className="border rounded px-3 py-1"
+          onClick={addRow}
+        >
           + Add link
         </button>
         <button
+          type="button"
           className="border rounded px-3 py-1 bg-black text-white disabled:opacity-60"
           onClick={onSave}
           disabled={saving}

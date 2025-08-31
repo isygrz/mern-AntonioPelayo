@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import log from '@/utils/logger';
 
 export default function FeaturedProductSection({ config }) {
   const items = Array.isArray(config?.items) ? config.items : [];
@@ -15,8 +16,7 @@ export default function FeaturedProductSection({ config }) {
           const href =
             item?.link || (item?.slug ? `/product/${item.slug}` : '#');
           if (!item?.link && !item?.slug) {
-            // eslint-disable-next-line no-console
-            console.warn(
+            log.warn(
               '[FeaturedProductSection] Missing link/slug for item',
               item
             );

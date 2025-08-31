@@ -2161,3 +2161,84 @@ Updated `server.js`:
 - When the app “loads but shows nothing,” first hit /api/health and /api/health/db
 - If DB not connected: check .env, Atlas IP allowlist, or local mongod
 - If connected but API 404s: verify mounts in server.js
+
+209. Verify My Account routes render (UI guards)
+
+- Confirmed `/my-account/products|blogs|heroes|badges|settings|uploads|approvals` render non-blank screens
+- Added loading/empty/error guards in AdminUserApprovalScreen and other admin views to prevent blank routes
+- Ensured ErrorBoundary wraps app shell to catch render-time exceptions in account/admin areas
+
+210. Slug utility is present and wired to controllers
+
+- Verified `slug.js` exists
+- Ensured `productController.js` and `blogController.js` import and use slug generator consistently for create/update
+- Normalized slugs on title changes; preserved existing slugs when unchanged
+
+211. Add health endpoints for CMS & Products
+
+- Added `GET /api/cms/health` and `GET /api/products/health` returning `{ ok: true, ts }`
+- Useful for uptime probes and the “Health-First Triage Procedure”
+
+212. Products health wiring & route order safety
+
+- Implemented `productController.health` and registered route early in `productRoutes.js` (before dynamic `/:id|:slug`)
+- Prevents greedy param routes from shadowing `/health`
+
+213. Tiny logger + gated logs in production (frontend)
+
+- Added `logger.js` to centralize logging and avoid noisy `console.*` in production
+- Levels: debug/info/warn/error; dev prints, prod no-ops except warn/error (configurable)
+
+214. ESLint rule to ban raw console.\* and config integration
+
+- Introduced an ESLint snippet to flag direct `console.log` so the team standardizes on the logger
+- Integrated into `eslint.config.js` with safe overrides
+- Added npm scripts: `lint`, and optional codemod helpers in `package.json`
+
+215. Codemod: convert console._ → logger._ (safe AST)
+
+- Provided `transform-console-to-logger.cjs` for `jscodeshift`
+- Dry-run & apply commands documented (`npm run codemod:logger:dry`, `npm run codemod:logger`)
+- Improves consistency and reduces future lint churn
+
+216. Frontend fixes: env usage + hook ordering
+
+- Replaced `process.env.*` with `import.meta.env.*` in components (e.g., MobileSessionLauncher.jsx)
+- Fixed conditional hook ordering in `Header.jsx` (no hooks inside conditionals)
+- Cleaned minor issues in `FooterSettingsScreen.jsx` (unused params removed, stable handlers)
+
+217. ToastProvider split for Fast Refresh
+
+- Split `ToastProvider.jsx` (default export component) from `useToast` hook and `toastContext` to satisfy `react-refresh/only-export-components`
+- Updated imports (e.g., DebugPanel to `@/components/ui/useToast`)
+- Wrapped app with `ToastProvider` in `main.jsx` via default import
+
+218. Lint cleanup & stability fixes
+
+- `ErrorBoundary.jsx`: swap `console.error` → `log.error`; dev-only stack preview
+- `BlogPreviewSection.jsx` / `FeaturedProductSection.jsx`: use logger, remove unused disables
+- `SearchResultsScreen.jsx`: stabilized memo deps (use frozen EMPTY) and optional product auto-fetch
+- `authSlice.js`: remove unused `getStored`, replace empty catch blocks with comments
+
+219. Offline snapshot cache infra (frontend)
+
+- Added `snapshot.js` (localStorage-based) and `OfflineProvider.jsx` with `/api/cms/health` polling
+- Introduced `OfflineBanner.jsx` for a slim offline/cached indicator
+- Added `cmsApi.js` and refactored `footerApi.js` to use snapshot fallback
+- Wrapped app in `OfflineProvider` and rendered `OfflineBanner` near the top
+
+220. Footer: offline-aware via useFooter hook
+
+- Created `useFooter.js` to fetch footer links with snapshot fallback and expose `stale`/`online`/`refresh`
+- Refactored `Footer.jsx` to consume the hook and show a subtle “cached/offline” hint
+
+221. Backend CMS footer endpoint
+
+- `cmsController.js`: added `getFooter` (returns `{ links, updatedAt }`), dev `no-store`, prod `max-age=60`
+- `cmsRoutes.js`: registered `GET /api/cms/footer` and kept `/api/cms/health` as-is
+- Frontend now gets 200 vs 404 and snapshot-caches footer content
+
+222. main.jsx: toast import fix
+
+- Switched to default import for the provider: `import ToastProvider from '@/components/ui/ToastProvider.jsx'`
+- Eliminates “does not provide an export named 'ToastProvider'” error

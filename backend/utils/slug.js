@@ -1,19 +1,24 @@
 import slugify from 'slugify';
 
 /**
- * createSlug
+ * createSlug(text)
  * Normalize a human-readable string to a URL-safe slug.
+ * - lowercased
+ * - strict (removes special characters)
+ * - collapses spaces to dashes
  */
 export const createSlug = (text = '') =>
   slugify(text || 'item', { lower: true, strict: true });
 
 /**
- * ensureUniqueSlug
+ * ensureUniqueSlug(Model, baseSlug, ignoreId?)
  * Guarantees slug uniqueness for a given Mongoose Model.
- * If a collision is found, appends -1, -2, ... until unique.
- * Optionally exclude a given _id (use when updating an existing doc).
+ * - If a collision is found, appends -1, -2, ... until unique.
+ * - Optional ignoreId excludes an existing document (useful on updates).
+ * - Safety cap prevents infinite loops on pathological data.
  */
 export const ensureUniqueSlug = async (Model, baseSlug, ignoreId = null) => {
+  const MAX_ATTEMPTS = 1000;
   let candidate = baseSlug || 'item';
   let n = 0;
 
@@ -26,6 +31,11 @@ export const ensureUniqueSlug = async (Model, baseSlug, ignoreId = null) => {
     if (!exists) return candidate;
 
     n += 1;
+    if (n > MAX_ATTEMPTS) {
+      throw new Error(
+        'ensureUniqueSlug: exceeded maximum attempts while generating a unique slug'
+      );
+    }
     candidate = `${baseSlug}-${n}`;
   }
 };

@@ -3,27 +3,17 @@ import QRCode from 'react-qr-code';
 import { generateSecureId } from '@/utils/generateSecureId';
 
 /**
- * MobileSessionLauncher (refactored)
- * ----------------------------------
- * Prevents unsafe redirects by NEVER using parked/placeholder domains.
- * The QR's base URL is resolved in this priority:
- *   1) Vite client env:   import.meta.env.VITE_MOBILE_BASE_URL (recommended)
- *                          (fallback: import.meta.env.VITE_FRONTEND_ORIGIN)
- *   2) Next client env:   process.env.NEXT_PUBLIC_MOBILE_BASE_URL
- *                          (fallback: process.env.FRONTEND_ORIGIN)
- *   3) window.location.origin (safe for dev/preview)
- *   4) http://localhost:5173 (final fallback)
- *
- * Also renders the session URL next to the QR and provides copy/open actions
- * so you can verify what the QR actually points to during demos.
+ * MobileSessionLauncher (lint-fix)
+ * - Uses Vite client env only (no process.env)
+ * - Catch blocks without unused identifiers (avoids no-unused-vars)
+ * - Comments in catches avoid no-empty
  */
 
-const stripTrailingSlash = (s) => s.replace(/\/$/, '');
+const stripTrailingSlash = (s = '') => s.replace(/\/$/, '');
 
 const getSafeBaseUrl = () => {
-  let envUrl;
-
   // 1) Vite-style client env
+  let envUrl;
   try {
     if (typeof import.meta !== 'undefined' && import.meta.env) {
       envUrl =
@@ -32,24 +22,10 @@ const getSafeBaseUrl = () => {
         undefined;
     }
   } catch {
-    /* no-op */
+    /* ignore: env access not available */
   }
 
-  // 2) Next-style client env (or other bundlers exposing process.env)
-  if (!envUrl) {
-    try {
-      if (typeof process !== 'undefined' && process?.env) {
-        envUrl =
-          process.env.NEXT_PUBLIC_MOBILE_BASE_URL ||
-          process.env.FRONTEND_ORIGIN ||
-          undefined;
-      }
-    } catch {
-      /* no-op */
-    }
-  }
-
-  // 3) Browser origin for dev/preview
+  // 2) Browser origin for dev/preview
   const originUrl =
     typeof window !== 'undefined' ? window.location.origin : undefined;
 
@@ -69,6 +45,7 @@ const getSafeBaseUrl = () => {
           : new URL('http://localhost:5173');
       return stripTrailingSlash(o.toString());
     } catch {
+      /* ignore */
       return 'http://localhost:5173';
     }
   }
@@ -117,7 +94,7 @@ const MobileSessionLauncher = () => {
       await navigator.clipboard.writeText(sessionUrl);
       alert('Session link copied to clipboard.');
     } catch {
-      /* no-op */
+      /* ignore */
     }
   };
 
@@ -140,8 +117,7 @@ const MobileSessionLauncher = () => {
             <code>{baseUrl || 'resolving…'}</code>
           </p>
           <p className="text-xs text-gray-500">
-            Tip: set <code>VITE_MOBILE_BASE_URL</code> (Vite) or{' '}
-            <code>NEXT_PUBLIC_MOBILE_BASE_URL</code> (Next) for demos.
+            Tip: set <code>VITE_MOBILE_BASE_URL</code> (Vite env) for demos.
           </p>
         </div>
       ) : (

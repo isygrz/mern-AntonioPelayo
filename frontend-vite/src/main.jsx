@@ -1,3 +1,4 @@
+import log from '@/utils/logger';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
@@ -15,7 +16,7 @@ import { updateCmsLayout } from './redux/slices/cmsSlice.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 // ✅ Toasts
-import { ToastProvider } from '@/components/ui/ToastProvider.jsx';
+import ToastProvider from '@/components/ui/ToastProvider.jsx';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -39,5 +40,5 @@ if (import.meta.env.MODE === 'development' && typeof window !== 'undefined') {
   window.fetchAllProducts = fetchAllProducts;
   window.fetchAllBlogs = fetchAllBlogs;
   window.updateCmsLayout = updateCmsLayout;
-  console.log('🧪 Redux store and thunks exposed on window');
+  log.debug('🧪 Redux store and thunks exposed on window');
 }

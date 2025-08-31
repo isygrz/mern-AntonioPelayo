@@ -1,3 +1,4 @@
+import log from '@/utils/logger';
 import HeroSection from './sections/HeroSection.jsx';
 import PromoGridSection from './sections/PromoGridSection.jsx';
 import FeaturedProductSection from './sections/FeaturedProductSection.jsx';
@@ -18,7 +19,7 @@ const SectionRenderer = ({ sections = [], products = [], blogs = [] }) => {
     );
   }
 
-  console.log('🔍 CMS Sections in Renderer:', sections);
+  log.debug('🔍 CMS Sections in Renderer:', sections);
 
   return (
     <>

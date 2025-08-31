@@ -6,23 +6,17 @@ import { setQuery } from '@/redux/slices/searchSlice';
 import SearchSuggest from '@/components/SearchSuggest';
 
 /**
- * Demo-worthy Header
- * - Left: brand link
- * - Center (md+): SearchSuggest bar
- * - Right: Cart badge + Account dropdown (or Sign In → /check-email)
- * - Mobile: condensed layout with a simple search input
- * - Accessibility: ESC closes menu, click-outside guard
+ * Header (lint-fix for hooks + unused catch var)
  */
 export default function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { userInfo } = useSelector((s) => s.auth || {});
 
-  // Cart count (defensive over common shapes)
-  const cartItems =
-    useSelector((s) => s.cart?.items) ||
-    useSelector((s) => s.cart?.cartItems) ||
-    [];
+  // One unconditional selector to avoid hook-order issues
+  const cartItems = useSelector(
+    (s) => s.cart?.items ?? s.cart?.cartItems ?? []
+  );
   const cartCount = Array.isArray(cartItems)
     ? cartItems.reduce((acc, it) => acc + (Number(it?.qty) || 1), 0)
     : 0;
@@ -51,8 +45,8 @@ export default function Header() {
   const onSignOut = async () => {
     try {
       await dispatch(logoutServer()).unwrap();
-    } catch (_) {
-      // ignore server error
+    } catch {
+      /* ignore server error */
     } finally {
       dispatch(logoutLocal());
       closeMenu();

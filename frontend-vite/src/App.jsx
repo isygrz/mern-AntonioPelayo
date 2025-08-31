@@ -58,6 +58,10 @@ import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import AuthBootstrap from './components/AuthBootstrap.jsx';
 
+// Offline provider + banner
+import OfflineProvider from '@/offline/OfflineProvider';
+import OfflineBanner from '@/components/OfflineBanner';
+
 // Back-compat helper: redirect /admin/* -> /my-account/*
 function AdminAliasRedirect() {
   const { pathname, search } = useLocation();
@@ -73,95 +77,103 @@ function App() {
   }, [dispatch]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <AuthBootstrap />
+    <OfflineProvider>
+      <div className="min-h-screen flex flex-col">
+        {/* Slim banner appears when offline or using cached snapshots */}
+        <OfflineBanner />
 
-      <main className="flex-grow container mx-auto px-4">
-        <Routes>
-          {/* Public */}
-          <Route path="/" element={<HomeScreen />} />
-          <Route path="/product/:slug" element={<ProductScreen />} />
-          <Route path="/cart" element={<CartScreen />} />
-          <Route path="/search" element={<SearchResultsScreen />} />
-          <Route path="/contact" element={<ContactScreen />} />
-          <Route path="/blog" element={<BlogListScreen />} />
-          <Route path="/blog/:slug" element={<BlogPostScreen />} />
+        <Header />
+        <AuthBootstrap />
 
-          {/* Back-compat: old /account -> new dashboard */}
-          <Route
-            path="/account"
-            element={<Navigate to="/my-account/dashboard" replace />}
-          />
+        <main className="flex-grow container mx-auto px-4">
+          <Routes>
+            {/* Public */}
+            <Route path="/" element={<HomeScreen />} />
+            <Route path="/product/:slug" element={<ProductScreen />} />
+            <Route path="/cart" element={<CartScreen />} />
+            <Route path="/search" element={<SearchResultsScreen />} />
+            <Route path="/contact" element={<ContactScreen />} />
+            <Route path="/blog" element={<BlogListScreen />} />
+            <Route path="/blog/:slug" element={<BlogPostScreen />} />
 
-          {/* Auth Flow */}
-          <Route path="/check-email" element={<EmailCheckScreen />} />
-          <Route path="/signin" element={<SignInScreenSmart />} />
-          <Route path="/register" element={<RegisterScreen />} />
-          <Route
-            path="/register/personal"
-            element={<PersonalRegisterScreen />}
-          />
-          <Route path="/register/vendor" element={<VendorRegisterScreen />} />
-          <Route
-            path="/register/account-type"
-            element={<AccountTypeSelection />}
-          />
+            {/* Back-compat: old /account -> new dashboard */}
+            <Route
+              path="/account"
+              element={<Navigate to="/my-account/dashboard" replace />}
+            />
 
-          {/* Post-Registration Vendor Message */}
-          <Route
-            path="/thank-you-awaiting-approval"
-            element={<ThankYouAwaitingApproval />}
-          />
+            {/* Auth Flow */}
+            <Route path="/check-email" element={<EmailCheckScreen />} />
+            <Route path="/signin" element={<SignInScreenSmart />} />
+            <Route path="/register" element={<RegisterScreen />} />
+            <Route
+              path="/register/personal"
+              element={<PersonalRegisterScreen />}
+            />
+            <Route path="/register/vendor" element={<VendorRegisterScreen />} />
+            <Route
+              path="/register/account-type"
+              element={<AccountTypeSelection />}
+            />
 
-          {/* Protected Account Area */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/my-account" element={<AccountLayout />}>
-              <Route path="dashboard" element={<AccountScreen />} />
-              <Route path="orders" element={<div>Orders (TODO)</div>} />
-              <Route path="wishlist" element={<div>Wishlist (TODO)</div>} />
+            {/* Post-Registration Vendor Message */}
+            <Route
+              path="/thank-you-awaiting-approval"
+              element={<ThankYouAwaitingApproval />}
+            />
 
-              {/* Vendor & Admin shared tools */}
-              <Route
-                element={<ProtectedRoute requireRole={['admin', 'vendor']} />}
-              >
-                <Route path="inventory" element={<InventoryPanel />} />
+            {/* Protected Account Area */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/my-account" element={<AccountLayout />}>
+                <Route path="dashboard" element={<AccountScreen />} />
+                <Route path="orders" element={<div>Orders (TODO)</div>} />
+                <Route path="wishlist" element={<div>Wishlist (TODO)</div>} />
+
+                {/* Vendor & Admin shared tools */}
                 <Route
-                  path="mobile-tools"
-                  element={<MobileSessionLauncher />}
-                />
-                <Route path="profile" element={<VendorProfileForm />} />
-              </Route>
+                  element={<ProtectedRoute requireRole={['admin', 'vendor']} />}
+                >
+                  <Route path="inventory" element={<InventoryPanel />} />
+                  <Route
+                    path="mobile-tools"
+                    element={<MobileSessionLauncher />}
+                  />
+                  <Route path="profile" element={<VendorProfileForm />} />
+                </Route>
 
-              {/* Admin-only tools — ALL now in /my-account/* */}
-              <Route element={<ProtectedRoute requireRole="admin" />}>
-                <Route path="approvals" element={<AdminUserApprovalScreen />} />
-                <Route path="cms" element={<div>CMS Editor (TODO)</div>} />
-                <Route path="debug" element={<DebugPanel />} />
+                {/* Admin-only tools — ALL now in /my-account/* */}
+                <Route element={<ProtectedRoute requireRole="admin" />}>
+                  <Route
+                    path="approvals"
+                    element={<AdminUserApprovalScreen />}
+                  />
+                  <Route path="cms" element={<div>CMS Editor (TODO)</div>} />
+                  <Route path="debug" element={<DebugPanel />} />
 
-                <Route path="products" element={<ProductManager />} />
-                <Route path="blogs" element={<BlogManager />} />
-                <Route path="heroes" element={<HeroManager />} />
-                <Route path="badges" element={<BadgeManager />} />
-                <Route path="settings" element={<SettingsManager />} />
-                <Route path="uploads" element={<UploadsManager />} />
-                {/* ✨ NEW: Admin Footer Manager */}
-                <Route path="settings/footer" element={<FooterManager />} />
+                  <Route path="products" element={<ProductManager />} />
+                  <Route path="blogs" element={<BlogManager />} />
+                  <Route path="heroes" element={<HeroManager />} />
+                  <Route path="badges" element={<BadgeManager />} />
+                  <Route path="settings" element={<SettingsManager />} />
+                  <Route path="uploads" element={<UploadsManager />} />
+                  {/* ✨ NEW: Admin Footer Manager */}
+                  <Route path="settings/footer" element={<FooterManager />} />
+                </Route>
               </Route>
             </Route>
-          </Route>
 
-          {/* Back-compat: /admin/* aliases to /my-account/* */}
-          <Route path="/admin/*" element={<AdminAliasRedirect />} />
+            {/* Back-compat: /admin/* aliases to /my-account/* */}
+            <Route path="/admin/*" element={<AdminAliasRedirect />} />
 
-          {/* Fallback */}
-          <Route path="/not-authorized" element={<NotAuthorizedScreen />} />
-        </Routes>
-      </main>
+            {/* Fallback */}
+            <Route path="/not-authorized" element={<NotAuthorizedScreen />} />
+          </Routes>
+        </main>
 
-      <Footer />
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-    </div>
+        <Footer />
+        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+      </div>
+    </OfflineProvider>
   );
 }
 

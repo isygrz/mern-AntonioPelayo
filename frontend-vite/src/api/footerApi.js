@@ -1,11 +1,19 @@
-import api from './axiosInstance';
+import axios from '@/utils/axiosInstance';
+import { runWithSnapshot, writeSnapshot } from '@/offline/snapshot';
 
-export const fetchFooter = async () => {
-  const { data } = await api.get('/footer');
-  return data; // { links, updatedAt }
-};
+const KEY = 'footer';
 
-export const updateFooterLinks = async (links) => {
-  const { data } = await api.put('/footer', { links });
-  return data; // { links, updatedAt }
-};
+export async function fetchFooter() {
+  const res = await runWithSnapshot(
+    KEY,
+    () => axios.get('/cms/footer').then((r) => r.data),
+    { axios, healthUrl: '/cms/health' }
+  );
+  return res.data || { links: [], updatedAt: null };
+}
+
+export async function updateFooterLinks(links) {
+  const { data } = await axios.put('/cms/footer', { links });
+  writeSnapshot(KEY, data);
+  return data;
+}

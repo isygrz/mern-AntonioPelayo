@@ -200,6 +200,30 @@ export async function updateCmsLayout(req, res) {
 export const patchCmsLayout = updateCmsLayout;
 
 // Health probe
-export function cmsHealth(_req, res) {
+export const cmsHealth = (_req, res) => {
   return res.json({ ok: true, ts: Date.now() });
-}
+};
+
+/** NEW: GET /api/cms/footer
+ *  Minimal placeholder for MVP; frontend caches snapshot and renders safely offline.
+ *  Replace later with DB-backed Footer model.
+ */
+export const getFooter = async (_req, res) => {
+  try {
+    if (isProd) {
+      res.set('Cache-Control', 'public, max-age=60');
+    } else {
+      res.set('Cache-Control', 'no-store');
+    }
+    const links = [
+      { label: 'Home', url: '/' },
+      { label: 'Shop', url: '/search' },
+      { label: 'Blog', url: '/blog' },
+      { label: 'Contact', url: '/contact' },
+    ];
+    return res.json({ links, updatedAt: new Date().toISOString() });
+  } catch (err) {
+    logger?.error?.('[cms] getFooter failed', err);
+    return res.status(500).json({ message: 'Failed to load footer' });
+  }
+};

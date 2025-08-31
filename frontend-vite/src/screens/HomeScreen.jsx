@@ -1,3 +1,4 @@
+import log from '@/utils/logger';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCmsByRoute } from '@/redux/slices/cmsSlice';
@@ -18,9 +19,9 @@ const HomeScreen = () => {
     dispatch(fetchAllProducts());
   }, [dispatch]);
 
-  console.log('🧪 HomeScreen mounted');
-  console.log('🧪 Full CMS Redux state:', cmsState);
-  console.log(
+  log.debug('🧪 HomeScreen mounted');
+  log.debug('🧪 Full CMS Redux state:', cmsState);
+  log.debug(
     '🧪 HomeScreen CMS sections from Redux:',
     cmsState?.sections || []
   );

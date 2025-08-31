@@ -1,19 +1,16 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { ToastCtx } from './toastContext';
 
-const ToastCtx = createContext(null);
-
-export const ToastProvider = ({
+/**
+ * ToastProvider
+ * Component-only file to satisfy react-refresh/only-export-components.
+ * Provides a simple toast API via context and renders transient toasts.
+ */
+export default function ToastProvider({
   children,
   position = 'top-right',
   duration = 2500,
-}) => {
+}) {
   const [toasts, setToasts] = useState([]);
   const idRef = useRef(0);
 
@@ -73,10 +70,4 @@ export const ToastProvider = ({
       </div>
     </ToastCtx.Provider>
   );
-};
-
-export const useToast = () => {
-  const ctx = useContext(ToastCtx);
-  if (!ctx) throw new Error('useToast must be used within <ToastProvider />');
-  return ctx;
-};
+}

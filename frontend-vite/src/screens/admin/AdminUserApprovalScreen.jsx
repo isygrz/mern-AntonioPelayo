@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from '@/utils/axiosInstance';
 import toast from 'react-hot-toast';
+import log from '@/utils/logger';
 
 /**
  * AdminUserApprovalScreen (defensive shell)
@@ -24,8 +25,7 @@ export default function AdminUserApprovalScreen() {
       .catch((err) => {
         setError(err);
         toast.error('Failed to load pending users');
-        // eslint-disable-next-line no-console
-        console.error('[Approvals] fetch error', err);
+        log.error('[Approvals] fetch error', err);
       })
       .finally(() => setLoading(false));
     return () => {

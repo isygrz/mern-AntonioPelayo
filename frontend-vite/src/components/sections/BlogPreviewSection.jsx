@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import log from '@/utils/logger';
 
 export default function BlogPreviewSection({ config }) {
   const items = Array.isArray(config?.items) ? config.items : [];
@@ -12,11 +13,7 @@ export default function BlogPreviewSection({ config }) {
         {items.map((item, idx) => {
           const href = item?.link || (item?.slug ? `/blog/${item.slug}` : '#');
           if (!item?.link && !item?.slug) {
-            // eslint-disable-next-line no-console
-            console.warn(
-              '[BlogPreviewSection] Missing link/slug for item',
-              item
-            );
+            log.warn('[BlogPreviewSection] Missing link/slug for item', item);
           }
           return (
             <Link

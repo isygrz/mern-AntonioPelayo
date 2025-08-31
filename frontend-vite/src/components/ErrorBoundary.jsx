@@ -1,4 +1,5 @@
 import React from 'react';
+import log from '@/utils/logger';
 
 /**
  * ErrorBoundary: catches render errors under Admin/Account areas so the UI
@@ -13,8 +14,7 @@ export default class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
   componentDidCatch(error, info) {
-    // eslint-disable-next-line no-console
-    console.error('[ErrorBoundary]', error, info);
+    log.error('[ErrorBoundary]', error, info);
   }
   render() {
     if (this.state.hasError) {
