@@ -5,6 +5,7 @@ import {
   registerUser,
   getProfile,
 } from '../controllers/userController.js';
+import { logout as logoutController } from '../controllers/authLogoutController.js';
 
 const router = express.Router();
 
@@ -17,5 +18,8 @@ router.post('/register', registerUser);
 
 // Session/profile (reads cookie)
 router.get('/profile', getProfile);
+
+// Logout (clears httpOnly cookie server-side)
+router.post('/logout', logoutController);
 
 export default router;

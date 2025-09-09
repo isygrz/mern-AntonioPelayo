@@ -2242,3 +2242,268 @@ Updated `server.js`:
 
 - Switched to default import for the provider: `import ToastProvider from '@/components/ui/ToastProvider.jsx'`
 - Eliminates “does not provide an export named 'ToastProvider'” error
+
+223. main.jsx: toast import fix
+
+- Switched to default import for the provider:
+  → import ToastProvider from `@/components/ui/ToastProvider.jsx`
+- Eliminates “does not provide an export named 'ToastProvider'” error
+
+224. Router nesting fix (single <BrowserRouter> at the app root)
+
+- Why: React Router throws if multiple Routers render
+- Changes:
+  → Keep <BrowserRouter> only in `main.jsx`
+  → Ensure `App.jsx` renders without wrapping its own Router
+
+224. Unified guard: `ProtectedRoute.jsx`
+
+- Why: Centralize auth + role checks (RBAC) and remove per-route duplication
+- Changes:
+  → Implemented <ProtectedRoute requireRole="admin" | ['admin','vendor'] /> using <Outlet/>
+  → Redirects unauthenticated users to /signin and unauthorized users to /not-authorized
+
+225. Account routes under AccountLayout (and admin alias)
+
+- Why: Consistent nesting for /my-account/_ tools and an easy migration from /admin/_.
+- Changes (in `App.jsx`):
+  → Nested account tools:
+  <Route path="/my-account" element={<AccountLayout/>}>
+  <Route path="dashboard" element={<AccountScreen/>} />
+  → Add AdminAliasRedirect so /admin/_ → /my-account/_
+  → Created `AdminUserApprovalScreen.jsx`
+
+226. `AuthBootstrap.jsx` hardening
+
+- Why: Avoid “offline” false positives when auth is simply missing/expired
+- Changes:
+  → On /api/users/profile:
+  → 200: set credentials into Redux
+  → 401: treat as guest (no banner); clear credentials silently
+  → Network error: mark as offline (used by banner)
+  → Debounced to avoid toast spam
+
+227. CORS & Axios alignment
+
+- Why: Fix preflight failures and cookie-based auth
+- Client (`axiosInstance.js`):
+  → baseURL from import.meta.env.VITE_API_BASE_URL || '/api'
+  → withCredentials: true (send/receive cookies)
+  → Removed X-Requested-With header (caused CORS preflight rejection)
+- Interceptors:
+  → Map 401 → “guest mode” (do not trigger offline)
+  → Only network failures flip the offline flag
+- Server (`server.js`):
+  → cors({ origin: ['http://localhost:5173'], credentials: true })
+  → Explicit Access-Control-Allow-Credentials: true
+  → Allow Content-Type, Authorization, and typical headers
+  → cookie-parser enabled before routes
+
+228. Auth routes (cookies) in userRoutes.js
+
+- Why: Keep JWT in httpOnly cookies for SSR-friendly and XSS-resistant auth
+- Changes:
+  → POST /api/users/login: sets jwt cookie (httpOnly, sameSite: 'lax', secure in prod)
+  → POST /api/users/logout: clears cookie
+  → GET /api/users/profile: requires auth middleware; returns user summary
+
+229. `authSlice.js` tidy + thunk
+
+- Why: Align store with cookie strategy and guest-state defaults
+- Changes:
+  → bootstrapCurrentUser thunk calls /users/profile
+  → Handles 401 as guest (no errors surfaced).
+  → Exposes state.auth.user, state.auth.status ('idle'|'loading'|'authenticated'|'guest')
+
+230. `OfflineProvider.jsx` (context + banner signal)
+
+- Why: Distinguish “no network” from “not signed in”
+- Changes:
+  → Context tracks isOffline and usingSnapshot
+  → Only network errors / snapshot fallbacks raise the banner; 401 does not
+  → Emits lightweight custom events (offline:snapshot-\*) for hooks
+
+231. Footer data flow (`useFooter.js` + `Footer.jsx`)
+
+- Why: Show cached footer immediately, revalidate in background, and keep links correct
+- `useFooter.js`:
+  → Snapshot-first read from localStorage, then fetch /api/footer
+  → Normalize items to { name, url, external }
+  → Clear banner on fresh 2xx; mark snapshot only on fetch error
+- `Footer.jsx`:
+  → Renders internal links with <Link to={url}> and external with <a href={url} …>
+  → Removes any hard-coded 'Link' placeholders
+
+232. `App.jsx` structure cleanup
+
+- Why: Keep layout predictable and make account tools easy to find
+- Changes:
+→ Top-level structure:
+<OfflineProvider>
+<OfflineBanner/>
+  <Header/>
+  <main> <Routes>…</Routes> </main>
+  <Footer/>
+  <Toaster…/>
+</OfflineProvider>
+→ Public screens, auth flow, protected /my-account/*, admin-only nested routes, SPA 404
+
+233. `vite.config.js` alias + proxy
+
+- Why: DX and API calls without hardcoding host/port
+- Changes:
+  → alias: { '@': path.resolve(\_\_dirname, 'src') }
+  → Dev proxy: '/api' -> http://localhost:5000 with changeOrigin: true
+
+234. Path-to-regexp crash fix in `server.js`
+
+- Why: Avoid “Missing parameter name” thrown by invalid wildcard usage
+- Changes:
+  → Replaced problematic patterns (e.g. app.use('/_', …)) with safe catch-alls like:
+  → app.get('_', …) or
+  → specific app.use('/api', apiRouter) + static fallback
+
+235. RBAC screens placement & naming consistency
+
+- Why: Keep filesystem reflecting route tree
+- Changes:
+  → `AdminUserApprovalScreen.jsx` kept under src/screens/account/tools/ (naming aligned with other screens)
+  → Confirmed imports use alias @/screens/account/tools/AdminUserApprovalScreen.jsx
+
+236. Double-refresh sign-out bug resolved
+
+- Why: Users were “signed back in” on reload.
+- Changes:
+  → logout now clears cookie server-side and clears Redux state client-side
+  → AuthBootstrap respects 401 as guest—no rehydration from stale local state
+
+237. Hardened offline gating (single-source-of-truth)
+
+- Why: The “You’re offline” banner appeared due to unrelated requests (401s, canceled fetches, favicon 404) and HMR state
+- Changes:
+  → **Axios**: removed all global “offline/online” event emits. Interceptor now only returns or rejects
+  → `useFooter` (client): the **only** code allowed to control the banner
+  ▪ Ignores canceled requests (React StrictMode)
+  ▪ Retries once after \~150 ms
+  ▪ Emits **`offline:footer-used`** only when we actually render a snapshot due to real network failure
+  ▪ Emits **`offline:footer-clear`** after any 2xx fetch of `/api/footer`
+  → `OfflineProvider` (client): listens only to the namespaced events above, keeps an “armed” flag, and auto-clears after a short grace period to avoid stale HMR state
+- Result: banner appears only when we truly fall back to snapshot; clears on the first successful 2xx
+
+238. Footer data source & normalization (backend)
+
+- Why: Legacy DB docs had only `label`; frontend needed `url` + safety checks
+- Changes:
+  → `footerController.js`
+  ▪ `getFooter`: normalizes each link (supports `{name|label|title}`, `{url|href|path|to}`), sanitizes URLs (drops `javascript:`/`data:`), infers internal paths for common labels (`About`→`/about`, `Contact`→`/contact`, `Blog`→`/blog`), sorts by `order`, and returns a **small safe default** when collection is empty
+  ▪ `updateFooter` (admin): accepts `links[]`, normalizes/sanitizes, enforces `http(s)` for external URLs, upserts, returns canonical shape
+  → `footerRoutes.js` mounted at `/api`
+  ▪ `GET /api/footer` → `getFooter`
+  ▪ `PUT /api/footer` → `requireRole('admin')` → `updateFooter`
+  → **Vite proxy**: `/api` → `http://localhost:5000` (changeOrigin + secure\:false) so the SPA can hit the backend in dev
+- Result: `/api/footer` always returns `{ updatedAt, links: [{ name, url, external, order }] }`, safe to render
+
+239. Footer rendering & link safety (frontend)
+
+- Why: Ensure internal links use SPA navigation and external links open safely
+- Changes:
+  → **utils/url**:
+  ▪ `isInternal(url)`: treats `/`, `./`, `../` as internal; rejects protocol-relative and external protocols
+  ▪ `sanitizeUrl(url)`: trims & rejects `javascript:` and `data:` schemes
+  → `Footer.jsx`:
+  ▪ Renders internal links with `<Link to="…">`; external with `<a target="_blank" rel="noopener noreferrer">`
+  ▪ Drops falsy/unsafe links after normalization
+  ▪ Stable test hooks: `data-test="footer-links"` and `data-test="footer-root"`
+- Result: safe external navigation; correct SPA routing for internal paths
+
+240. Snapshot logic & local persistence (frontend)
+
+- Why: Show content quickly and remain usable when temporarily offline
+- Design:
+  → LocalStorage key: **`snapshot:footer:v1`**
+  → On first mount: hydrate from snapshot **without** showing the offline banner
+  → Revalidate via `/api/footer`:
+  ▪ **2xx** → update UI + snapshot + emit `offline:footer-clear`
+  ▪ **Non-2xx** → use snapshot silently if available; otherwise show empty + message
+  ▪ **Network error** → use snapshot **and** emit `offline:footer-used`
+- StrictMode cancellations are ignored; one retry is attempted before deciding offline
+
+241. End-to-end tests (Cypress)
+
+- Why: Prevent regressions for link safety and offline banner behavior
+- Setup:
+  → Cypress 15 E2E with TypeScript in the `cypress/` folder; support files initialized
+  → `footer_links.cy.ts`:
+  ▪ Asserts internal links are `<Link>`-style (no `target`) and externals open in a new tab with `rel="noopener noreferrer"`
+  ▪ Asserts unsafe `javascript:` links are dropped
+  → `offline_gating.cy.ts`:
+  ▪ Asserts that a **401 on bootstrap** does **not** show the offline banner
+  ▪ Asserts banner appears only for genuine network failure and clears on first 2xx
+- How to run:
+  → `npm run dev` (backend)
+  → `npm run dev` (frontend / Vite)
+  → `npx cypress open` → run specs
+
+242. Dev shim for troubleshooting (optional)
+
+- Why: Quickly isolate frontend vs backend issues
+- Feature:
+  → Add in `server.js` (before the normal router) behind `DEV_FAKE_FOOTER=1` to return a static footer payload
+- Start with:
+  → PowerShell: `$env:DEV_FAKE_FOOTER="1"; npm run dev`
+  → Bash: `DEV_FAKE_FOOTER=1 npm run dev`
+- Use-case: When debugging event races or StrictMode cancels, you can force a stable 200
+
+243. Seed & verify footer data (admin)
+
+- Seed via PUT:
+  → curl -X PUT http://localhost:5000/api/footer \
+  -H 'Content-Type: application/json' \
+  -d '{ "links": [
+  { "name": "Home", "url": "/", "order": 0 },
+  { "name": "About", "url": "/about", "order": 1 },
+  { "name": "Contact", "url": "/contact", "order": 2 },
+  { "name": "Docs", "url": "https://example.com/docs", "order": 3 }
+  ] }'
+- Verify (through Vite proxy): open `http://localhost:5173/api/footer` and confirm JSON
+
+244. Troubleshooting checklist
+
+- Banner won’t clear:
+  → Open DevTools → Network: confirm `/api/footer` returns **2xx**
+  → Console: run the event logger and verify `offline:footer-clear` fires after 2xx
+  → Ensure you’re using the **hardened** `OfflineProvider` from `OfflineProvider.jsx` (re-export exists in `OfflineProvider.jsx` for legacy imports)
+  → Clear snapshot & reload:
+  ▪ localStorage.removeItem('snapshot:footer:v1')
+  → Restart the frontend to clear HMR state
+  → Footer empty:
+  ▪ Check `/api/footer` response: missing/unsafe URLs are sanitized; add proper `url` fields or seed with PUT
+  → `/api/footer` canceled in dev:
+  ▪ This is normal with StrictMode. Our hook ignores cancellation and retries once
+
+245. Security & safety notes
+
+- Sanitization:
+  → `sanitizeUrl` drops `javascript:` and `data:` to prevent XSS
+- External links always render with `rel="noopener noreferrer"`
+- Backend enforces `http(s)` for external links at `updateFooter`
+- No banner changes are triggered by unrelated requests (401, favicon 404, etc.); only namespaced events from `useFooter` are honored
+
+246. Developer tips
+
+- When editing Offline logic:
+  → Keep Axios interceptor silent—do not emit global offline events
+  → Treat feature hooks (like `useFooter`) as the **owner** of banner state
+- When editing footer data:
+  → Prefer `name` + `url` + `order`
+  → For internal links, use `/path`; for external, full `https://…`
+- When adding tests:
+  → Use `data-test="footer-links"` and `data-test="offline-banner"` hooks
+  → To simulate offline, use `cy.intercept('/api/footer', { forceNetworkError: true })`
+
+247. Summary of outcomes
+
+- Offline banner is stable and accurate; no false positives from 401/canceled requests
+- Footer is safe, normalized, and resilient to legacy DB shapes
+- E2E coverage for link behavior and offline gating prevents regressions
+- Dev workflow improved: quick seeding, optional shim, clear debugging signals

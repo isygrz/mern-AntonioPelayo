@@ -5,8 +5,7 @@ import axios from '@/utils/axiosInstance';
  * Auth slice
  * - Persists userInfo to localStorage for UX continuity
  * - fetchProfile() rehydrates from cookie on refresh
- * - Adds postLoginRedirect handling in-state (fixes prior reducer that returned a string)
- * - Adds optional logoutServer thunk to clear server cookie
+ * - logoutServer clears server cookie; we also clear client state even if it fails
  */
 
 const storageKey = 'auth.userInfo';
@@ -17,7 +16,6 @@ const getStoredUser = () => {
     const raw = localStorage.getItem(storageKey);
     return raw ? JSON.parse(raw) : null;
   } catch {
-    /* ignore */
     return null;
   }
 };
@@ -63,13 +61,23 @@ export const registerUser = createAsyncThunk(
 );
 
 export const logoutServer = createAsyncThunk('auth/logoutServer', async () => {
+  // Always attempt server logout (clear httpOnly cookie)
   try {
     await axios.post('/users/logout');
   } catch {
-    /* ignore server errors; client will still clear local state */
+    // swallow; we'll still clear client state
   }
   return true;
 });
+
+// Convenience helper for components: dispatch(logout())
+export const logout = () => async (dispatch) => {
+  try {
+    await dispatch(logoutServer());
+  } finally {
+    dispatch(logoutLocal());
+  }
+};
 
 const initialState = {
   loading: false,
@@ -91,14 +99,10 @@ const slice = createSlice({
       state.postLoginRedirect = null;
       try {
         localStorage.removeItem(storageKey);
-      } catch {
-        /* ignore */
-      }
+      } catch {}
       try {
         localStorage.removeItem(redirectKey);
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     },
     setSelectedRole: (state, action) => {
       state.selectedRole = action.payload;
@@ -108,9 +112,7 @@ const slice = createSlice({
       state.postLoginRedirect = target;
       try {
         localStorage.setItem(redirectKey, target);
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     },
     consumePostLoginRedirect: (state) => {
       try {
@@ -138,16 +140,12 @@ const slice = createSlice({
         state.isAuthenticated = true;
         try {
           localStorage.setItem(storageKey, JSON.stringify(action.payload));
-        } catch {
-          /* ignore */
-        }
+        } catch {}
         const def = '/my-account/dashboard';
         state.postLoginRedirect = def;
         try {
           localStorage.setItem(redirectKey, def);
-        } catch {
-          /* ignore */
-        }
+        } catch {}
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -165,16 +163,12 @@ const slice = createSlice({
         state.isAuthenticated = true;
         try {
           localStorage.setItem(storageKey, JSON.stringify(action.payload));
-        } catch {
-          /* ignore */
-        }
+        } catch {}
         const def = '/my-account/dashboard';
         state.postLoginRedirect = def;
         try {
           localStorage.setItem(redirectKey, def);
-        } catch {
-          /* ignore */
-        }
+        } catch {}
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
@@ -192,9 +186,7 @@ const slice = createSlice({
         state.isAuthenticated = true;
         try {
           localStorage.setItem(storageKey, JSON.stringify(action.payload));
-        } catch {
-          /* ignore */
-        }
+        } catch {}
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false;
@@ -203,12 +195,10 @@ const slice = createSlice({
         state.error = action.payload;
         try {
           localStorage.removeItem(storageKey);
-        } catch {
-          /* ignore */
-        }
+        } catch {}
       })
 
-      // Logout server
+      // Logout server (clear client state on both success and failure)
       .addCase(logoutServer.fulfilled, (state) => {
         state.userInfo = null;
         state.isAuthenticated = false;
@@ -216,14 +206,22 @@ const slice = createSlice({
         state.postLoginRedirect = null;
         try {
           localStorage.removeItem(storageKey);
-        } catch {
-          /* ignore */
-        }
+        } catch {}
         try {
           localStorage.removeItem(redirectKey);
-        } catch {
-          /* ignore */
-        }
+        } catch {}
+      })
+      .addCase(logoutServer.rejected, (state) => {
+        state.userInfo = null;
+        state.isAuthenticated = false;
+        state.selectedRole = null;
+        state.postLoginRedirect = null;
+        try {
+          localStorage.removeItem(storageKey);
+        } catch {}
+        try {
+          localStorage.removeItem(redirectKey);
+        } catch {}
       });
   },
 });

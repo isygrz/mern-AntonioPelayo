@@ -1,0 +1,9 @@
+{
+  "updatedAt": "2025-09-01T12:00:00.000Z",
+  "links": [
+    { "name": "Home", "url": "/", "order": 0 },
+    { "name": "Account", "url": "/account", "order": 1 },
+    { "name": "External Docs", "url": "https://example.com/docs", "order": 2 },
+    { "name": "Unsafe", "url": "javascript:alert(1)", "order": 3 }
+  ]
+}

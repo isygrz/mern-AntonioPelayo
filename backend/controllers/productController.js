@@ -1,158 +1,212 @@
-import asyncHandler from '../middleware/asyncHandler.js';
 import Product from '../models/Product.js';
-import { createSlug, ensureUniqueSlug } from '../utils/slug.js';
+import mongoose from 'mongoose';
 
 /**
- * @desc    Simple health probe
- * @route   GET /api/products/health
- * @access  Public
+ * Utility: normalized slug
  */
-const productsHealth = (_req, res) => {
-  return res.json({ ok: true, ts: Date.now() });
+const toSlug = (str = '') =>
+  str
+    .toString()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .slice(0, 80);
+
+/**
+ * Health probe for products API family
+ * GET /api/products/health
+ * - Adds Cache-Control: no-store to avoid proxy/browser caching
+ */
+export const productsHealth = async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ status: 'ok', time: new Date().toISOString() });
+  } catch {
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({ status: 'ok' });
+  }
 };
 
 /**
- * @desc    Fetch all products
- * @route   GET /api/products
- * @access  Public
+ * Public list of products
+ * GET /api/products
+ * Query: page, pageSize, q (name contains), status (default: active; pass status=all to disable filter)
  */
-const getProducts = asyncHandler(async (_req, res) => {
-  const products = await Product.find({});
-  res.json(products);
-});
+export const getProducts = async (req, res, next) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page || '1', 10));
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.pageSize || '20', 10))
+    );
+    const skip = (page - 1) * pageSize;
+    const q = (req.query.q || '').trim();
+    const rawStatus = (req.query.status ?? 'active')
+      .toString()
+      .trim()
+      .toLowerCase();
+
+    const filter = {};
+    // status=all disables status filtering
+    if (rawStatus && rawStatus !== 'all') filter.status = rawStatus;
+    if (q)
+      filter.name = {
+        $regex: q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        $options: 'i',
+      };
+
+    const [items, total] = await Promise.all([
+      Product.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(pageSize),
+      Product.countDocuments(filter),
+    ]);
+
+    res.json({ items, total, page, pageSize });
+  } catch (err) {
+    next(err);
+  }
+};
 
 /**
- * @desc    Fetch product by ID
- * @route   GET /api/products/:id
- * @access  Public
+ * GET /api/products/:id
+ * (also used by /api/products/mobile/:id through middleware)
  */
-const getProductById = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
-  }
-  res.json(product);
-});
-
-/**
- * @desc    Fetch product by slug
- * @route   GET /api/products/slug/:slug
- * @access  Public
- */
-const getProductBySlug = asyncHandler(async (req, res) => {
-  const slug = String(req.params.slug || '').trim();
-  const product = await Product.findOne({ slug });
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
-  }
-  res.json(product);
-});
-
-/**
- * @desc    Create a new product
- * @route   POST /api/products
- * @access  Admin
- */
-const createProduct = asyncHandler(async (req, res) => {
-  const name = String(req.body?.name || 'Sample Product').trim();
-  const incomingSlug = req.body?.slug ? String(req.body.slug).trim() : null;
-  const baseSlug = createSlug(incomingSlug || name);
-  const uniqueSlug = await ensureUniqueSlug(Product, baseSlug);
-
-  const product = new Product({
-    name,
-    slug: uniqueSlug,
-    price: req.body?.price ?? 0,
-    user: req.user?._id,
-    image: req.body?.image || 'http://localhost:5000/uploads/p4.jpeg',
-    badge: req.body?.badge ?? null,
-    brand: req.body?.brand || 'Sample Brand',
-    category: req.body?.category || 'Sample Category',
-    countInStock: req.body?.countInStock ?? 0,
-    numReviews: req.body?.numReviews ?? 0,
-    description: req.body?.description || 'Sample description',
-    sku: req.body?.sku || `SKU-${Date.now()}`,
-  });
-
-  const created = await product.save();
-  res.status(201).json(created);
-});
-
-/**
- * @desc    Update a product
- * @route   PUT /api/products/:id
- * @access  Admin
- */
-const updateProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
-  }
-
-  const prevName = product.name;
-  const nextName =
-    typeof req.body?.name === 'string' ? req.body.name.trim() : product.name;
-  const incomingSlugRaw =
-    typeof req.body?.slug === 'string' ? req.body.slug.trim() : undefined;
-
-  product.name = nextName;
-  product.price = req.body?.price ?? product.price;
-  product.description = req.body?.description ?? product.description;
-  product.image = req.body?.image ?? product.image;
-  product.badge = req.body?.badge ?? product.badge;
-  product.brand = req.body?.brand ?? product.brand;
-  product.category = req.body?.category ?? product.category;
-  product.countInStock = req.body?.countInStock ?? product.countInStock;
-  if (typeof req.body?.isSample !== 'undefined') {
-    product.isSample = !!req.body.isSample;
-  }
-
-  // Slug rules:
-  // 1) If explicit slug provided (including empty string):
-  //    - empty => regenerate from name
-  //    - non-empty => normalize + ensure unique
-  // 2) Else if name changed OR slug missing => regenerate from name and ensure unique
-  if (incomingSlugRaw !== undefined) {
-    if (incomingSlugRaw === '') {
-      const base = createSlug(nextName);
-      product.slug = await ensureUniqueSlug(Product, base, product._id);
-    } else {
-      const base = createSlug(incomingSlugRaw);
-      product.slug = await ensureUniqueSlug(Product, base, product._id);
+export const getProductById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: 'invalid product id' });
     }
-  } else if (!product.slug || nextName !== prevName) {
-    const base = createSlug(nextName);
-    product.slug = await ensureUniqueSlug(Product, base, product._id);
+    const doc = await Product.findById(id);
+    if (!doc) return res.status(404).json({ message: 'product not found' });
+    res.json(doc);
+  } catch (err) {
+    next(err);
   }
-
-  const updated = await product.save();
-  res.json(updated);
-});
+};
 
 /**
- * @desc    Delete a product
- * @route   DELETE /api/products/:id
- * @access  Admin
+ * GET /api/products/slug/:slug
  */
-const deleteProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
-  if (!product) {
-    res.status(404);
-    throw new Error('Product not found');
+export const getProductBySlug = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const doc = await Product.findOne({ slug });
+    if (!doc) return res.status(404).json({ message: 'product not found' });
+    res.json(doc);
+  } catch (err) {
+    next(err);
   }
-  await product.deleteOne();
-  res.json({ message: 'Product removed' });
-});
+};
 
-export {
-  productsHealth,
-  getProducts,
-  getProductById,
-  getProductBySlug,
-  createProduct,
-  updateProduct,
-  deleteProduct,
+/**
+ * Admin/Vendor listing
+ * GET /api/products/admin
+ */
+export const listProductsAdmin = async (req, res, next) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page || '1', 10));
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.pageSize || '20', 10))
+    );
+    const skip = (page - 1) * pageSize;
+
+    const [items, total] = await Promise.all([
+      Product.find({}).sort({ updatedAt: -1 }).skip(skip).limit(pageSize),
+      Product.countDocuments({}),
+    ]);
+
+    res.json({ items, total, page, pageSize });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/products
+ */
+export const createProduct = async (req, res, next) => {
+  try {
+    const {
+      name,
+      price,
+      images = [],
+      slug,
+      status = 'active',
+      ...rest
+    } = req.body || {};
+    if (!name) return res.status(400).json({ message: 'name is required' });
+    if (price == null || Number.isNaN(Number(price)))
+      return res.status(400).json({ message: 'valid price is required' });
+
+    let newSlug = (slug || '').trim() || toSlug(name);
+    // ensure unique slug
+    let exists = await Product.findOne({ slug: newSlug });
+    if (exists)
+      newSlug = `${newSlug}-${new mongoose.Types.ObjectId()
+        .toString()
+        .slice(-6)}`;
+
+    const doc = await Product.create({
+      name,
+      price: Number(price),
+      images,
+      slug: newSlug,
+      status,
+      ...rest,
+    });
+    res.status(201).json(doc);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * PUT /api/products/:id
+ */
+export const updateProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const patch = { ...req.body };
+
+    if (patch.slug) {
+      const exists = await Product.findOne({
+        slug: patch.slug,
+        _id: { $ne: id },
+      });
+      if (exists)
+        return res.status(409).json({ message: 'slug already in use' });
+    }
+
+    if (patch.price != null && Number.isNaN(Number(patch.price))) {
+      return res.status(400).json({ message: 'invalid price' });
+    }
+    if (patch.price != null) patch.price = Number(patch.price);
+
+    const updated = await Product.findByIdAndUpdate(
+      id,
+      { $set: patch },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: 'product not found' });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * DELETE /api/products/:id
+ */
+export const deleteProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const removed = await Product.findByIdAndDelete(id);
+    if (!removed) return res.status(404).json({ message: 'product not found' });
+    res.json({ deleted: true, id });
+  } catch (err) {
+    next(err);
+  }
 };

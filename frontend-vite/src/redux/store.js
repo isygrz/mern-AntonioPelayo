@@ -12,7 +12,8 @@ import cmsReducer from './slices/cmsSlice';
 import footerReducer from './slices/footerSlice';
 import usersReducer from './slices/userSlice';
 import vendorProfileReducer from './slices/vendorProfileSlice';
-import searchReducer from './slices/searchSlice'; // NEW
+import searchReducer from './slices/searchSlice';
+import adminUsersReducer from './slices/adminUserSlice'; // NEW
 
 const store = configureStore({
   reducer: {
@@ -28,7 +29,8 @@ const store = configureStore({
     footer: footerReducer,
     users: usersReducer,
     vendorProfile: vendorProfileReducer,
-    search: searchReducer, // NEW
+    search: searchReducer,
+    adminUsers: adminUsersReducer, // NEW
   },
 });
 

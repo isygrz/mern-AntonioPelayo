@@ -1,99 +1,123 @@
+// Normalizes legacy links, sanitizes URLs, and provides both GET and PUT handlers.
+
 import Footer from '../models/Footer.js';
-import logger from '../utils/logger.js';
 
-const isDev = (process.env.NODE_ENV || 'development') === 'development';
-
-const setCacheHeaders = (res) => {
-  if (isDev) {
-    // Dev: always show 200 in DevTools and avoid stale data while iterating
-    res.set(
-      'Cache-Control',
-      'no-store, no-cache, must-revalidate, proxy-revalidate'
-    );
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-  } else {
-    // Prod: short caching with SWR keeps UI snappy without going stale for long
-    // Clients may cache for 60s; can serve stale for 5m while revalidating in background
-    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-  }
+/** sanitize URL: drop javascript:, data: */
+const sanitizeUrl = (u) => {
+  if (!u || typeof u !== 'string') return '';
+  const s = u.trim();
+  const lower = s.toLowerCase();
+  if (lower.startsWith('javascript:') || lower.startsWith('data:')) return '';
+  return s;
 };
 
-const coerceToLinks = (doc) => {
+/** guess internal path when only a label exists (legacy docs) */
+const guessUrlFromLabel = (label = '') => {
+  const key = String(label).trim().toLowerCase();
+  if (key === 'about' || key === 'about us') return '/about';
+  if (key === 'contact' || key === 'contact us') return '/contact';
+  if (key === 'blog' || key === 'blogs') return '/blog';
+  return '';
+};
+
+/** normalize one DB link into the shape the frontend expects */
+const normalizeDbLink = (l = {}, idx = 0) => {
+  const name = l.name ?? l.label ?? l.title ?? `Link ${idx + 1}`;
+  const rawUrl =
+    l.url ?? l.href ?? l.path ?? l.to ?? guessUrlFromLabel(l.label);
+  const url = sanitizeUrl(rawUrl);
+  const enabled = l.enabled !== false && Boolean(url);
+  const order = Number.isFinite(l.order) ? l.order : idx;
+  const external = /^https?:\/\//i.test(url);
+  return { name, url, external, enabled, order };
+};
+
+/** GET /api/footer */
+export const getFooter = async (req, res, next) => {
   try {
-    if (!doc) return [];
-    if (Array.isArray(doc.links)) return doc.links;
-    if (Array.isArray(doc.sections)) {
-      return doc.sections
-        .map((s) => {
-          const label = (s?.label ?? s?.title ?? '').toString().trim();
-          const url = (s?.url ?? s?.href ?? '').toString().trim();
-          return label ? { label, url } : null;
-        })
-        .filter(Boolean);
+    res.set('Cache-Control', 'no-store');
+
+    const doc = (await Footer.findOne({}, {}, { sort: { updatedAt: -1 } })) ?? {
+      links: [],
+      updatedAt: new Date(0),
+    };
+
+    let normalized = Array.isArray(doc.links)
+      ? doc.links.map(normalizeDbLink).filter((l) => l.enabled)
+      : [];
+
+    // If still empty, return a small safe default so the UI renders
+    if (normalized.length === 0) {
+      normalized = [
+        {
+          name: 'About',
+          url: '/about',
+          external: false,
+          enabled: true,
+          order: 0,
+        },
+        {
+          name: 'Contact',
+          url: '/contact',
+          external: false,
+          enabled: true,
+          order: 1,
+        },
+        {
+          name: 'Blog',
+          url: '/blog',
+          external: false,
+          enabled: true,
+          order: 2,
+        },
+      ];
     }
-    return [];
-  } catch (e) {
-    logger?.warn?.('[footer] coerceToLinks fallback', e);
-    return [];
-  }
-};
 
-// Optional probe for DebugPanel
-export const footerHealth = (_req, res) => {
-  res.json({ ok: true, ts: Date.now() });
-};
-
-export const getFooter = async (_req, res) => {
-  try {
-    setCacheHeaders(res);
-    const footer = await Footer.findOne();
-    const links = coerceToLinks(footer);
     return res.json({
-      links,
-      updatedAt: footer?.updatedAt || new Date().toISOString(),
+      updatedAt:
+        (doc.updatedAt ?? new Date()).toISOString?.() ||
+        new Date().toISOString(),
+      links: normalized.sort((a, b) => a.order - b.order),
     });
   } catch (err) {
-    logger?.error?.('[footer] getFooter failed', err);
-    setCacheHeaders(res);
-    return res.json({ links: [], updatedAt: new Date().toISOString() });
+    next(err);
   }
 };
 
-export const updateFooter = async (req, res) => {
+/** PUT /api/footer (admin) */
+export const updateFooter = async (req, res, next) => {
   try {
-    const incoming = req.body || {};
-    const sectionsIn = Array.isArray(incoming.sections)
-      ? incoming.sections
-      : null;
-    const linksIn = Array.isArray(incoming.links) ? incoming.links : null;
+    const { links } = req.body || {};
+    if (!Array.isArray(links)) {
+      return res.status(400).json({ message: 'links must be an array' });
+    }
 
-    const normalizedSections = sectionsIn
-      ? sectionsIn
-      : (linksIn || []).map((l) => ({
-          label: (l?.label ?? '').toString().trim(),
-          url: (l?.url ?? '').toString().trim(),
-        }));
+    const normalized = links.map(normalizeDbLink).filter((l) => l.enabled);
 
-    // Basic sanitize: drop empties
-    const sections = (normalizedSections || []).filter(
-      (s) => s && (s.label || '').trim().length > 0
-    );
+    // Enforce http(s) for external links
+    for (const l of normalized) {
+      if (l.external && !/^https?:\/\//i.test(l.url)) {
+        return res
+          .status(400)
+          .json({
+            message: `External URL must start with http(s):// for "${l.name}"`,
+          });
+      }
+    }
 
-    const updated = await Footer.findOneAndUpdate(
+    const doc = await Footer.findOneAndUpdate(
       {},
-      { sections },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
+      { links: normalized, updatedAt: new Date() },
+      { new: true, upsert: true }
     );
 
-    // Apply cache headers on write response too
-    setCacheHeaders(res);
-
+    res.set('Cache-Control', 'no-store');
+    const out = (doc.links || []).map(normalizeDbLink).filter((l) => l.enabled);
     return res.json({
-      links: coerceToLinks(updated),
-      updatedAt: updated?.updatedAt || new Date().toISOString(),
+      updatedAt: doc.updatedAt.toISOString?.() || new Date().toISOString(),
+      links: out,
     });
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid footer payload' });
+    next(err);
   }
 };

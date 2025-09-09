@@ -2,17 +2,17 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 /**
- * ProtectedRoute (unified, role + permission aware)
+ * ProtectedRoute (RBAC-aware)
  *
  * Props:
- * - requireRole: string | string[]  (e.g., "admin" or ["admin","vendor"])
- * - requirePerm: string | string[]  (e.g., "admin:all" or ["products:write","blogs:write"])
+ * - requireRole | roles : string | string[]   // allowed roles (alias: roles)
+ * - requirePerm         : string | string[]   // required permission(s)
+ * - fallback            : string              // optional override for unauthorized redirect
  *
- * Auth passes if:
- *   1) User is authenticated (Redux) OR we have a user object (rehydrated), AND
- *   2) (if present) user.approved !== false, AND
- *   3) (if present) user's role is in requireRole, AND
- *   4) (if present) user's permissions include requirePerm (all of them if array).
+ * Redirect rules:
+ *  1) Not authenticated  -> /signin (preserve 'from')
+ *  2) Auth'd vendor not approved -> /thank-you-awaiting-approval
+ *  3) Auth'd but lacks role/perm -> /not-authorized  (404-style page per project choice)
  */
 const normalizeRole = (user) =>
   user?.role || (user?.isAdmin ? 'admin' : user?.accountType || 'guest');
@@ -22,34 +22,50 @@ const isApproved = (user) => {
   return true; // default legacy behavior
 };
 
-const hasRequiredRole = (user, requireRole) => {
-  if (!requireRole) return true;
+const hasRequiredRole = (user, required) => {
+  if (!required) return true;
   const role = normalizeRole(user);
-  if (Array.isArray(requireRole)) return requireRole.includes(role);
-  return role === requireRole;
+  const list = Array.isArray(required) ? required : [required];
+  return list.includes(role);
 };
 
-const hasRequiredPerms = (user, requirePerm) => {
-  if (!requirePerm) return true;
-  const perms = user?.permissions || [];
-  if (Array.isArray(requirePerm)) {
-    return requirePerm.every((p) => perms.includes(p));
-  }
-  return perms.includes(requirePerm);
+const hasRequiredPerms = (user, required) => {
+  if (!required) return true;
+  const userPerms = user?.permissions || [];
+  const list = Array.isArray(required) ? required : [required];
+  return list.every((p) => userPerms.includes(p));
 };
 
-const ProtectedRoute = ({ requireRole, requirePerm }) => {
+const ProtectedRoute = (props) => {
+  const { requireRole, roles, requirePerm, fallback } = props;
+  const requiredRoles = roles ?? requireRole; // support both prop names for compatibility
   const auth = useSelector((s) => s.auth || {});
   const user = auth?.userInfo;
   const location = useLocation();
 
-  const authed = !!auth?.isAuthenticated || !!user;
-  const approved = user ? isApproved(user) : false;
-  const roleOk = hasRequiredRole(user, requireRole);
-  const permOk = hasRequiredPerms(user, requirePerm);
+  const authed = Boolean(auth?.isAuthenticated || user);
 
-  if (!authed || !approved || !roleOk || !permOk) {
-    return <Navigate to="/email-check" state={{ from: location }} replace />;
+  // 1) Not authenticated
+  if (!authed) {
+    return <Navigate to="/signin" state={{ from: location }} replace />;
+  }
+
+  // 2) Vendor approval gate
+  if (normalizeRole(user) === 'vendor' && !isApproved(user)) {
+    return <Navigate to="/thank-you-awaiting-approval" replace />;
+  }
+
+  // 3) Role/perm checks
+  const roleOk = hasRequiredRole(user, requiredRoles);
+  const permOk = hasRequiredPerms(user, requirePerm);
+  if (!roleOk || !permOk) {
+    return (
+      <Navigate
+        to={fallback || '/not-authorized'}
+        state={{ from: location }}
+        replace
+      />
+    );
   }
 
   return <Outlet />;

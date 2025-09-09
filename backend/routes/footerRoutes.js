@@ -1,20 +1,13 @@
+// GET /api/footer and PUT /api/footer (admin)
+// Mount with: app.use('/api', footerRoutes)
+
 import express from 'express';
-import {
-  getFooter,
-  updateFooter,
-  footerHealth,
-} from '../controllers/footerController.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { getFooter, updateFooter } from '../controllers/footerController.js';
+import { requireRole } from '../middleware/requireRole.js';
 
 const router = express.Router();
 
-// Optional probe: GET /api/footer/health
-router.get('/health', footerHealth);
-
-// GET /api/footer  → returns { links, updatedAt }
-router.get('/', getFooter);
-
-// PUT /api/footer (admin-only) → accepts { links } or { sections }
-router.put('/', protect, admin, updateFooter);
+router.get('/footer', getFooter);
+router.put('/footer', requireRole('admin'), updateFooter);
 
 export default router;
